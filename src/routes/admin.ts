@@ -1,13 +1,13 @@
 //hehehe
 import express, { Express } from 'express';
 import usersController from '../controllers/admin/users.controller'
-import { requireAdmin } from '../middleware/auth.middleware';
+
 const router = express.Router();
 
 const webAdmin = (app: Express) => {
     
 
-    router.use(requireAdmin);
+  
     // Dashboard
     router.get('/', (req, res) => {
         res.render('admin/dashboard/dashboard', {

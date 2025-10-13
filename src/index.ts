@@ -3,7 +3,6 @@ import express, {Express} from "express" ;
 import 'dotenv/config'
 import webAdmin from "./routes/admin";
 import webUser from "./routes/client";
-import authRoutes from "./routes/auth";
 const app: Express = express();
 const port = process.env.PORT || 8000;
 import session from 'express-session';
@@ -19,7 +18,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
 
-// ✅ Config Session - THÊM ĐOẠN NÀY
+//sesion
 app.use(session({
   secret: process.env.SESSION_SECRET || 'ha-nguyen-2025',
   resave: false,
@@ -33,7 +32,7 @@ app.use(session({
 //config route
 webAdmin(app); 
 webUser(app); 
-authRoutes(app);
+// authRoutes(app);
 
 
 //seeding data 
