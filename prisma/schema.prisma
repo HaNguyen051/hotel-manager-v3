@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int       @id @default(autoincrement())
+  name      String
+  email     String    @unique
+  phone     String?
+  password  String
+  role      Role      @default(CUSTOMER)
+  bookings  Booking[]
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+}
+
+model Room {
+  id          Int        @id @default(autoincrement())
+  name        String     @unique
+  type        String
+  cost        Int
+  status      RoomStatus @default(AVAILABLE)
+  img         String?
+  description String?
+  bookings    Booking[]
+}
+
+model Booking {
+  id        Int           @id @default(autoincrement())
+  userId    Int
+  roomId    Int
+  status    BookingStatus @default(PENDING)
+  dateFrom  DateTime
+  dateTo    DateTime
+  createdAt DateTime      @default(now())
+
+  user    User     @relation(fields: [userId], references: [id])
+  room    Room     @relation(fields: [roomId], references: [id])
+  payment Payment? // quan hệ 1-1
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  bookingId Int           @unique // đảm bảo 1 booking chỉ có 1 payment
+  userId    Int?
+  method    PaymentMethod
+  amount    Int
+  status    PaymentStatus @default(PENDING)
+  createdAt DateTime      @default(now())
+
+  booking Booking @relation(fields: [bookingId], references: [id])
+  user    User?   @relation(fields: [userId], references: [id])
+}
+
+model Service {
+  id          Int     @id @default(autoincrement())
+  name        String
+  price       Int
+  description String?
+}
+
+enum Role {
+  ADMIN
+  CUSTOMER
+}
+
+enum RoomStatus {
+  AVAILABLE
+  BOOKED
+  MAINTENANCE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  ONLINE
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
