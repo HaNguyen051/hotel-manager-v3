@@ -2,39 +2,43 @@ import { prisma } from "config/client";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { getUserWithRoleById } from "services/client/auth.service";
-
-
+import bcrypt from "bcrypt";
 
 const configPassportLocal = () => {
     passport.use(new LocalStrategy({
-        passReqToCallback: true
+        passReqToCallback: true,
+        usernameField: 'username',
+        passwordField: 'password'
     }, async function verify(req, username, password, callback) {
-
         const { session } = req as any;
         if (session?.messages?.length) {
             session.messages = [];
         }
 
-        console.log(">>> check username/password: ", username, password)
-        //check user exist in database
-        const user = await prisma.user.findUnique({
-            where: { username }
-        })
-        if (!user) {
-            //throw error
-            // throw new Error(`Username: ${username} not found`);
-            return callback(null, false, { message: `Invalid Username/password` });
+        console.log(">>> Check username/password:", username);
+
+        try {
+            // Check if user exists
+            const user = await prisma.user.findUnique({
+                where: { username },
+                include: { role: true }
+            });
+
+            if (!user) {
+                return callback(null, false, { message: `Invalid email or password` });
+            }
+
+            // Compare password
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                return callback(null, false, { message: `Invalid email or password` });
+            }
+
+            return callback(null, user as any);
+        } catch (error) {
+            console.error("Login error:", error);
+            return callback(error);
         }
-
-        //compare password
-        // const isMatch = await comparePassword(password, user.password);
-        // if (!isMatch) {
-        //     // throw new Error(`Invalid password`);
-        //     return callback(null, false, { message: `Invalid Username/password` });
-
-        // }
-
-        return callback(null, user as any);
     }));
 
     passport.serializeUser(function (user: any, callback) {
@@ -42,12 +46,14 @@ const configPassportLocal = () => {
     });
 
     passport.deserializeUser(async function (user: any, callback) {
-        const { id, username } = user;
-        //query to database
-        const userInDB: any = await getUserWithRoleById(id);
-      
-        return callback(null, { ...userInDB });
+        const { id } = user;
+        try {
+            const userInDB: any = await getUserWithRoleById(id);
+            return callback(null, { ...userInDB });
+        } catch (error) {
+            return callback(error);
+        }
     });
-}
+};
 
 export default configPassportLocal;

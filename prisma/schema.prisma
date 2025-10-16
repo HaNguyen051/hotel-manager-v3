@@ -21,7 +21,7 @@ model User {
   id          Int     @id @default(autoincrement())
   username    String  @unique @db.VarChar(255)
   password    String  @db.VarChar(255)
-  fullName    String  @db.VarChar(255)
+  fullName    String? @db.VarChar(255)
   phone       String? @db.VarChar(20)
   address     String? @db.VarChar(500)
   avatar      String? @db.VarChar(255)
@@ -56,7 +56,6 @@ model Room {
   image       String?    @db.VarChar(255)
   description String?    @db.MediumText
   capacity    Int        @default(2)
-  // floor       Int? // ✅ Đã thêm sau migration
 
   roomBookings RoomBooking[]
   Booking      Booking[]

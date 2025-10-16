@@ -1,61 +1,111 @@
-
-import { getAdminBookingPage, getAdminPaymentPage, getAdminRoomPage, getAdminUserPage, getDashboardPage } from "controllers/admin/dashboard.controller";
-import { getCreateUserPage, getViewUser, postCreateUser, postDeleteUser, postUpdateUser , } from "controllers/user.controller";
-import express, {Express} from "express" ;
+// ==================== src/routes/web.ts ====================
+import express, { Express } from "express";
 import passport from "passport";
-import fileUploadMiddleware from "src/middleware/multer";
+import fileUploadMiddleware from "../middleware/multer";
 
-const router = express.Router() 
-const webRoutes = (app :Express) => {
-    //src\views
-    //client route
-    // router.get("/", getHomePage);
-    // router.get("/product/:id", getProductPage);
-    // router.get("/login", getLoginPage); 
-    // router.get("/register", getRegisterPage); 
-    // router.post("/register", postRegister); 
-    //phan quyen
-    // router.get("/success-redirect", getSuccessRedirectPage)
-    router.post('/login/', passport.authenticate('local', {
-        successReturnToOrRedirect: '/success-redirect',
-        failureRedirect: '/login', 
+// Import Admin Controllers
+import {
+    getDashboardPage,
+    getAdminBookingPage,
+    getAdminPaymentPage,
+    getAdminRoomPage,
+    getAdminUserPage
+} from "controllers/admin/dashboard.controller";
+
+import {
+    getCreateRoomPage,
+    getViewRoom,
+    postCreateRoom,
+    postDeleteRoom,
+    postUpdateRoom
+} from "controllers/admin/room.controller";
+
+import {
+    getCreateUserPage,
+    getViewUser,
+    postCreateUser,
+    postDeleteUser,
+    postUpdateUser
+} from "controllers/user.controller";
+
+// Import Auth Controllers
+import {
+    getLoginPage,
+    getRegisterPage,
+    postRegister,
+    getSuccessRedirectPage,
+    postLogout
+} from "controllers/client/auth.controller";
+
+// Import Middleware
+import { isLogin, isAuthenticated, isAdmin } from "../middleware/auth";
+
+const router = express.Router();
+
+const webRoutes = (app: Express) => {
+
+    // ==================== PUBLIC ROUTES ====================
+    // Trang chủ - Ai cũng truy cập được
+    router.get("/", (req, res) => {
+        res.render("client/home/show");
+    });
+
+    // ==================== AUTH ROUTES ====================
+    // Login & Register - Chỉ người chưa đăng nhập
+    router.get("/login", isLogin, getLoginPage);
+    router.post("/login", passport.authenticate("local", {
+        successRedirect: "/success-redirect",
+        failureRedirect: "/login",
         failureMessage: true
     }));
 
-    // router.post('/add-product-to-cart/:id' , postAddProductToCart)
-    // router.get("/cart", getCartPage) 
-    // router.post("/delete-product-in-cart/:id", postDeleteProductInCart);
-    // router.get("/checkout", getCheckOutPage);
+    router.get("/register", isLogin, getRegisterPage);
+    router.post("/register", isLogin, postRegister);
 
+    // Redirect sau khi login thành công
+    router.get("/success-redirect", isAuthenticated, getSuccessRedirectPage);
 
-    //giong nhau url van ko van de j  
-    //admin routes
-    router.get("/admin",getDashboardPage);
-    //user
-    router.get("/admin/user", getAdminUserPage);
-    router.get("/admin/create-user", getCreateUserPage); 
-    router.post("/admin/handle-create-user", fileUploadMiddleware('avatar'), postCreateUser); 
-    router.post("/admin/delete-user/:id", postDeleteUser);
-    router.get("/admin/view-user/:id", getViewUser);
-    router.post("/admin/update-user",  fileUploadMiddleware('avatar'),postUpdateUser); 
-    //  router.post("/logout", postLogout);
+    // Logout - Cần đăng nhập
+    router.post("/logout", isAuthenticated, postLogout);
 
-    
-    // router.get("/admin/order", getAdminOrderPage);
+    // ==================== USER ROUTES (Authenticated) ====================
+    // Profile - Cần đăng nhập (cả Admin và User đều vào được)
+    router.get("/profile", isAuthenticated, (req, res) => {
+        res.render("client/profile/index", { user: req.user });
+    });
 
-    //product
-    // router.get("/admin/create-product" , getCreateProductPage)
-    // router.get("/admin/product", getAdminProductPage);
-    // router.post("/admin/handle-create-product", fileUploadMiddleware('image' , "images/product"), postCreateProductPage); 
-    // router.get("/admin/view-product/:id", getViewProduct); 
-    // router.post("/admin/delete-product/:id", postDeleteProductPage); 
-    // router.post("/admin/update-product", fileUploadMiddleware('image' , "images/product"), postUpdateProductPage); 
-  
-    router.get("/admin/room", getAdminRoomPage);
-    router.get("/admin/booking", getAdminBookingPage);
-    router.get("/admin/payment", getAdminPaymentPage);
-    app.use('/' , router); 
-}
+    // Các route cho user xem phòng, đặt phòng (nếu có)
+    // router.get("/rooms", isAuthenticated, getRoomsPage);
+    // router.get("/booking", isAuthenticated, getBookingPage);
 
+    // ==================== ADMIN ROUTES - CHỈ ADMIN ====================
+    // Dashboard
+    router.get("/admin", isAuthenticated, isAdmin, getDashboardPage);
 
-export default webRoutes ; 
+    // ===== USER MANAGEMENT =====
+    router.get("/admin/user", isAuthenticated, isAdmin, getAdminUserPage);
+    router.get("/admin/create-user", isAuthenticated, isAdmin, getCreateUserPage);
+    router.post("/admin/handle-create-user", isAuthenticated, isAdmin, fileUploadMiddleware("avatar"), postCreateUser);
+    router.get("/admin/view-user/:id", isAuthenticated, isAdmin, getViewUser);
+    router.post("/admin/update-user", isAuthenticated, isAdmin, fileUploadMiddleware("avatar"), postUpdateUser);
+    router.post("/admin/delete-user/:id", isAuthenticated, isAdmin, postDeleteUser);
+
+    // ===== ROOM MANAGEMENT =====
+    router.get("/admin/room", isAuthenticated, isAdmin, getAdminRoomPage);
+    router.get("/admin/create-room", isAuthenticated, isAdmin, getCreateRoomPage);
+    router.post("/admin/handle-create-room", isAuthenticated, isAdmin, fileUploadMiddleware("image"), postCreateRoom);
+    router.get("/admin/view-room/:id", isAuthenticated, isAdmin, getViewRoom);
+    router.post("/admin/update-room", isAuthenticated, isAdmin, fileUploadMiddleware("image"), postUpdateRoom);
+    router.post("/admin/delete-room/:id", isAuthenticated, isAdmin, postDeleteRoom);
+
+    // ===== BOOKING MANAGEMENT =====
+    router.get("/admin/booking", isAuthenticated, isAdmin, getAdminBookingPage);
+
+    // ===== PAYMENT MANAGEMENT =====
+    router.get("/admin/payment", isAuthenticated, isAdmin, getAdminPaymentPage);
+
+    // Apply routes to app
+    app.use("/", router);
+};
+
+export default webRoutes;

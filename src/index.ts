@@ -47,10 +47,11 @@ app.use(session({
             dbRecordIdFunction: undefined,
         })
 }))
+configPassportLocal();
 app.use(passport.initialize());
 app.use(passport.authenticate('session'));
 
-configPassportLocal;
+
 
 
 //config global

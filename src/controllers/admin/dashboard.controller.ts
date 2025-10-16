@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getDashboardInfo } from "services/admin/dashboard.service";
+import { getAllRooms } from "services/admin/room.service";
 import { getAllUsers } from "services/user.service";
 
 const getDashboardPage = async (req: Request, res: Response) => {
@@ -18,8 +19,10 @@ const getAdminUserPage = async (req: Request, res: Response) => {
 }
 
 const getAdminRoomPage = async (req: Request, res: Response) => {
-
-    return res.render("admin/room/show.ejs");
+    const rooms = await getAllRooms();
+    return res.render("admin/room/show.ejs", {
+        rooms
+    });
 }
 
 const getAdminBookingPage = async (req: Request, res: Response) => {

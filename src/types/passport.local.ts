@@ -1,54 +1,63 @@
-
-import { prisma } from "../config/client";
+import { prisma } from "config/client";
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { getUserWithRoleById } from "../services/client/auth.service";
-
-
+import { getUserWithRoleById } from "services/client/auth.service";
+import bcrypt from "bcrypt";
 
 const configPassportLocal = () => {
     passport.use(new LocalStrategy({
-        passReqToCallback: true
-    }, async function verify(req, username, password, callback) {
+        usernameField: 'username',
+        passwordField: 'password'
+    }, async function verify(username, password, callback) {
+        try {
+            console.log(">>> LocalStrategy verify - username:", username);
 
-        const { session } = req as any;
-        if (session?.messages?.length) {
-            session.messages = [];
+            // Check user exists
+            const user = await prisma.user.findUnique({
+                where: { username },
+                include: { role: true }
+            });
+
+            if (!user) {
+                console.log(">>> User not found");
+                return callback(null, false, { message: `Invalid Username/password` });
+            }
+
+            console.log(">>> User found, checking password");
+
+            // Compare password - ✅ UNCOMMENT
+            const isMatch = await bcrypt.compare(password, user.password);
+            if (!isMatch) {
+                console.log(">>> Password mismatch");
+                return callback(null, false, { message: `Invalid Username/password` });
+            }
+
+            console.log(">>> Login success, returning user");
+            return callback(null, user as any); // ✅ UNCOMMENT
+        } catch (error) {
+            console.error(">>> Login error:", error);
+            return callback(error);
         }
-
-        console.log(">>> check username/password: ", username, password)
-        //check user exist in database
-        const user = await prisma.user.findUnique({
-            where: { username }
-        })
-        if (!user) {
-            //throw error
-            // throw new Error(`Username: ${username} not found`);
-            return callback(null, false, { message: `Invalid Username/password` });
-        }
-
-        //compare password
-        // const isMatch = await comparePassword(password, user.password);
-        // if (!isMatch) {
-        //     // throw new Error(`Invalid password`);
-        //     return callback(null, false, { message: `Invalid Username/password` });
-
-        // }
-
-        // return callback(null, user as any);
     }));
 
+    // ✅ Serialize: chỉ lưu user.id
     passport.serializeUser(function (user: any, callback) {
-        callback(null, { id: user.id, username: user.username });
+        console.log(">>> serializeUser - id:", user.id);
+        callback(null, user.id);
     });
 
-    passport.deserializeUser(async function (user: any, callback) {
-        const { id, username } = user;
-        //query to database
-        const userInDB: any = await getUserWithRoleById(id);
-      
-        return callback(null, { ...userInDB, });
+    // ✅ Deserialize: lấy user từ db với role
+    passport.deserializeUser(async function (id: any, callback) {
+        try {
+            console.log(">>> deserializeUser - id:", id);
+            const userInDB = await getUserWithRoleById(id);
+            console.log(">>> User deserialized:", userInDB ? "YES" : "NO");
+            callback(null, userInDB);
+        } catch (error) {
+            console.error(">>> Deserialize error:", error);
+            callback(error);
+        }
     });
-}
+};
 
 export default configPassportLocal;
