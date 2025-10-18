@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { getDashboardInfo } from "services/admin/dashboard.service";
+import { getAllPayments } from "services/admin/payment.service";
 import { getAllRooms } from "services/admin/room.service";
 import { getAllUsers } from "services/user.service";
 
@@ -25,10 +26,32 @@ const getAdminRoomPage = async (req: Request, res: Response) => {
     });
 }
 
-const getAdminPaymentPage = async (req: Request, res: Response) => {
 
-    return res.render("admin/payment/show.ejs");
-}
+const getAdminPaymentPage = async (req: Request, res: Response) => {
+    try {
+        const payments = await getAllPayments();
+        const { session } = req as any;
+        const messages = session?.messages ?? [];
+
+        if (session?.messages) {
+            session.messages = [];
+            session.save();
+        }
+
+        return res.render("admin/payment/show.ejs", {
+            payments,
+            messages,
+            error: undefined
+        });
+    } catch (error: any) {
+        console.error("Error:", error);
+        return res.render("admin/payment/show.ejs", {
+            payments: [],
+            messages: [],
+            error: error.message
+        });
+    }
+};
 
 export {
     getDashboardPage, getAdminUserPage, getAdminRoomPage,  getAdminPaymentPage

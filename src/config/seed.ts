@@ -89,61 +89,25 @@ const initDatabase = async () => {
 
         // ==================== TẠO PHÒNG MẪU ====================
         const roomCount = await prisma.room.count();
-        if (roomCount === 0) {
-            console.log('Tạo phòng mẫu...');
+                if (roomCount === 0) {
+            console.log('Tạo 5 phòng mới từ SQL...');
             await prisma.room.createMany({
                 data: [
-                    {
-                        name: 'Phòng Standard 101',
-                        type: 'Standard',
-                        price: 500000,
-                        capacity: 2,
-                        status: 'AVAILABLE',
-                        image :'' , 
-                        description: 'Phòng tiêu chuẩn với đầy đủ tiện nghi cơ bản'
-                    },
-                    {
-                        name: 'Phòng Deluxe 201',
-                        type: 'Deluxe',
-                        price: 800000,
-                        capacity: 2,
-                        status: 'AVAILABLE',
-                        image :'' , 
-                        description: 'Phòng cao cấp rộng rãi với view đẹp'
-                    },
-                    {
-                        name: 'Phòng Suite 301',
-                        type: 'Suite',
-                        price: 1500000,
-                        capacity: 4,
-                        status: 'AVAILABLE',
-                        image :'' , 
-                        description: 'Phòng VIP sang trọng với phòng khách riêng'
-                    },
-                    {
-                        name: 'Phòng Family 102',
-                        type: 'Family',
-                        price: 1200000,
-                        capacity: 4,
-                        status: 'AVAILABLE',
-                        image :'' , 
-                        description: 'Phòng gia đình rộng rãi'
-                    },
-                    {
-                        name: 'Phòng Presidential 401',
-                        type: 'Presidential',
-                        price: 3000000,
-                        capacity: 6,
-                        status: 'AVAILABLE',
-                        image :'' , 
-                        description: 'Phòng tổng thống đẳng cấp nhất'
-                    }
+                    // Chỉ thêm 5 phòng mới từ SQL
+                    { name: 'Phòng 101', type: 'Single', price: 500000,image: 'room-101.jpg', description: 'Phòng đơn tiện nghi, view thành phố', capacity: 1 },
+                    { name: 'Phòng 102', type: 'Double', price: 800000,image: 'room-102.jpg', description: 'Phòng đôi sang trọng, bồn tắm spa', capacity: 2 },
+                    { name: 'Phòng 103', type: 'Suite', price: 1500000,image: 'room-103.jpg', description: 'Phòng suite cao cấp, phòng khách riêng', capacity: 4 },
+                    { name: 'Phòng 201', type: 'Double', price: 900000,image: 'room-201.jpg', description: 'Phòng đôi view hồ, ban công riêng', capacity: 2 },
+                    { name: 'Phòng 202', type: 'Single', price: 550000, image: 'room-202.jpg', description: 'Phòng đơn hiện đại, WiFi miễn phí', capacity: 1 }
                 ],
+                skipDuplicates: true,
             });
-            console.log('Đã tạo 5 phòng mẫu');
+                console.log('Đã tạo 5 phòng mới.');
         } else {
-            console.log('Phòng đã tồn tại');
+                    console.log('Phòng đã tồn tại');
         }
+          
+        
 
         // ==================== TẠO DỊCH VỤ MẪU ====================
         const serviceCount = await prisma.service.count();
@@ -204,3 +168,4 @@ const initDatabase = async () => {
 };
 
 export default initDatabase;
+

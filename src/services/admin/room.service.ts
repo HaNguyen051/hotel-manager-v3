@@ -6,8 +6,8 @@ const handleCreateRoom = async (
     type: string,
     price: number,
     capacity: number,
-    description: string,
-    image: string,
+    description: string | null,
+    image: string | null,
     status: RoomStatus
 ) => {
     const newRoom = await prisma.room.create({
@@ -18,7 +18,7 @@ const handleCreateRoom = async (
             capacity: +capacity,
             description: description,
             image: image,
-            status: status
+            status: status || RoomStatus.AVAILABLE
         }
     });
     return newRoom;
@@ -44,7 +44,7 @@ const updateRoomById = async (
     type: string,
     price: number,
     capacity: number,
-    description: string,
+    description: string | null,
     image: string | undefined,
     status: RoomStatus
 ) => {

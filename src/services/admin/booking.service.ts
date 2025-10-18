@@ -23,37 +23,38 @@ interface UpdateBookingData {
     checkOutDate?: Date;
     specialRequest?: string | null;
     status?: BookingStatus;
-    totalPrice?: number; // ✅ Thêm dòng này
 }
 
-// ✅ Helper: Calculate number of nights
+// ========== HELPERS ==========
 const calculateNights = (checkIn: Date, checkOut: Date): number => {
     const msPerDay = 24 * 60 * 60 * 1000;
     return Math.ceil((checkOut.getTime() - checkIn.getTime()) / msPerDay);
-}
+};
 
-// ✅ Helper: Validate booking dates
 const validateDates = (checkIn: Date, checkOut: Date) => {
     const now = new Date();
     now.setHours(0, 0, 0, 0);
 
     if (checkIn < now) {
-        throw new Error("Check-in date không thể là ngày quá khứ");
+        throw new Error("Ngày nhận phòng không thể là ngày quá khứ");
     }
 
     if (checkOut <= checkIn) {
-        throw new Error("Check-out date phải sau check-in date");
+        throw new Error("Ngày trả phòng phải sau ngày nhận phòng");
     }
 
-    const maxDays = 365;
     const nights = calculateNights(checkIn, checkOut);
-    if (nights > maxDays) {
-        throw new Error(`Booking không thể vượt quá ${maxDays} đêm`);
+    if (nights > 365) {
+        throw new Error("Booking không thể vượt quá 365 đêm");
     }
-}
+};
 
-// ✅ Helper: Check room availability
-const isRoomAvailable = async (roomId: number, checkIn: Date, checkOut: Date, excludeBookingId?: number) => {
+const isRoomAvailable = async (
+    roomId: number,
+    checkIn: Date,
+    checkOut: Date,
+    excludeBookingId?: number
+) => {
     try {
         const conflictBooking = await prisma.roomBooking.findFirst({
             where: {
@@ -71,190 +72,273 @@ const isRoomAvailable = async (roomId: number, checkIn: Date, checkOut: Date, ex
 
         return !conflictBooking;
     } catch (error) {
-        console.error("Error checking room availability:", error);
-        return false;
+        console.error("Error checking availability:", error);
+        throw error;
     }
-}
+};
 
-const getAllBookings = async () => {
-    const bookings = await prisma.booking.findMany({
-        include: {
-            user: true,
-            roomBookings: {
-                include: { room: true }
+// ========== CRUD OPERATIONS ==========
+
+const getAllBookings = async (status?: string) => {
+    try {
+        const where = status && status !== 'all' ? { status: status as BookingStatus } : {};
+
+        const bookings = await prisma.booking.findMany({
+            where,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        phone: true,
+                        username: true
+                    }
+                },
+                roomBookings: {
+                    include: { room: true }
+                },
+                payment: true
             },
-            payment: true
-        },
-        orderBy: { createdAt: 'desc' }
-    });
+            orderBy: { createdAt: 'desc' }
+        });
 
-    return bookings;
-}
+        return bookings;
+    } catch (error) {
+        console.error("Error fetching bookings:", error);
+        throw error;
+    }
+};
 
 const getBookingById = async (id: number) => {
-    const booking = await prisma.booking.findUnique({
-        where: { id },
-        include: {
-            user: true,
-            roomBookings: {
-                include: { room: true }
-            },
-            payment: true
-        }
-    });
+    try {
+        const booking = await prisma.booking.findUnique({
+            where: { id },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        phone: true,
+                        username: true
+                    }
+                },
+                roomBookings: {
+                    include: { room: true }
+                },
+                payment: true
+            }
+        });
 
-    return booking;
-}
+        return booking;
+    } catch (error) {
+        console.error("Error fetching booking:", error);
+        throw error;
+    }
+};
 
 const getAvailableRooms = async () => {
-    const rooms = await prisma.room.findMany({
-        where: { status: 'AVAILABLE' },
-        orderBy: { name: 'asc' }
-    });
+    try {
+        const rooms = await prisma.room.findMany({
+            where: { status: 'AVAILABLE' },
+            select: {
+                id: true,
+                name: true,
+                type: true,
+                price: true,
+                capacity: true,
+                description: true
+            },
+            orderBy: { name: 'asc' }
+        });
 
-    return rooms;
-}
+        return rooms;
+    } catch (error) {
+        console.error("Error fetching available rooms:", error);
+        throw error;
+    }
+};
 
 const createBooking = async (data: CreateBookingData) => {
-    validateDates(data.checkInDate, data.checkOutDate);
-
-    // Check room availability
-    const isAvailable = await isRoomAvailable(data.roomId, data.checkInDate, data.checkOutDate);
-    if (!isAvailable) {
-        throw new Error("Phòng này không khả dụng cho khoảng thời gian này");
-    }
-
-    // Get room to calculate price
-    const room = await prisma.room.findUnique({
-        where: { id: data.roomId }
-    });
-
-    if (!room) {
-        throw new Error("Phòng không tồn tại");
-    }
-
-    // Calculate nights and total price
-    const nights = calculateNights(data.checkInDate, data.checkOutDate);
-    const totalPrice = room.price * nights;
-
-    // Create booking with room booking
-    const booking = await prisma.booking.create({
-        data: {
-            guestName: data.guestName,
-            guestPhone: data.guestPhone,
-            guestEmail: data.guestEmail || null,
-            guestCount: data.guestCount,
-            checkInDate: data.checkInDate,
-            checkOutDate: data.checkOutDate,
-            specialRequest: data.specialRequest || null,
-            totalPrice,
-            status: 'CONFIRMED', // ✅ Set CONFIRMED thay vì PENDING để auto update room status
-            userId: data.userId,
-            roomId: data.roomId,
-            roomBookings: {
-                create: {
-                    roomId: data.roomId,
-                    price: room.price,
-                    quantity: nights
-                }
-            }
-        },
-        include: {
-            roomBookings: { include: { room: true } },
-            user: true
+    try {
+        if (!data.guestName || !data.guestPhone || !data.roomId) {
+            throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc");
         }
-    });
 
-    // ✅ Update room status to BOOKED
-    await prisma.room.update({
-        where: { id: data.roomId },
-        data: { status: 'BOOKED' }
-    });
+        validateDates(data.checkInDate, data.checkOutDate);
 
-    return booking;
-}
+        const isAvailable = await isRoomAvailable(
+            data.roomId,
+            data.checkInDate,
+            data.checkOutDate
+        );
 
-const updateBooking = async (id: number, data: UpdateBookingData) => {
-    const booking = await prisma.booking.findUnique({
-        where: { id },
-        include: { roomBookings: true }
-    });
-
-    if (!booking) {
-        throw new Error("Booking không tồn tại");
-    }
-
-    // If dates changed, validate and check availability
-    if (data.checkInDate || data.checkOutDate) {
-        const checkIn = data.checkInDate || booking.checkInDate;
-        const checkOut = data.checkOutDate || booking.checkOutDate;
-        
-        validateDates(checkIn, checkOut);
-
-        const roomId = data.roomId || booking.roomId;
-        const isAvailable = await isRoomAvailable(roomId, checkIn, checkOut, id);
-        
         if (!isAvailable) {
             throw new Error("Phòng không khả dụng cho khoảng thời gian này");
         }
 
-        // Recalculate total price
-        if (data.roomId) {
-            const newRoom = await prisma.room.findUnique({
-                where: { id: data.roomId }
-            });
-            const nights = calculateNights(checkIn, checkOut);
-            data.totalPrice = newRoom!.price * nights;
+        const room = await prisma.room.findUnique({
+            where: { id: data.roomId }
+        });
+
+        if (!room) {
+            throw new Error("Phòng không tồn tại");
         }
+
+        const nights = calculateNights(data.checkInDate, data.checkOutDate);
+        const totalPrice = room.price * nights;
+
+        const booking = await prisma.booking.create({
+            data: {
+                guestName: data.guestName,
+                guestPhone: data.guestPhone,
+                guestEmail: data.guestEmail || null,
+                guestCount: data.guestCount,
+                checkInDate: data.checkInDate,
+                checkOutDate: data.checkOutDate,
+                specialRequest: data.specialRequest || null,
+                totalPrice,
+                status: 'PENDING',
+                userId: data.userId,
+                roomId: data.roomId,
+                roomBookings: {
+                    create: {
+                        roomId: data.roomId,
+                        price: room.price,
+                        quantity: nights
+                    }
+                }
+            },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        phone: true,
+                        username: true
+                    }
+                },
+                roomBookings: {
+                    include: { room: true }
+                },
+                payment: true
+            }
+        });
+
+        return booking;
+    } catch (error) {
+        console.error("Error creating booking:", error);
+        throw error;
     }
+};
 
-    const updateData: any = {};
-    if (data.guestName) updateData.guestName = data.guestName;
-    if (data.guestPhone) updateData.guestPhone = data.guestPhone;
-    if (data.guestEmail !== undefined) updateData.guestEmail = data.guestEmail;
-    if (data.guestCount) updateData.guestCount = data.guestCount;
-    if (data.checkInDate) updateData.checkInDate = data.checkInDate;
-    if (data.checkOutDate) updateData.checkOutDate = data.checkOutDate;
-    if (data.specialRequest !== undefined) updateData.specialRequest = data.specialRequest;
-    if (data.status) updateData.status = data.status;
-    if (data.totalPrice) updateData.totalPrice = data.totalPrice; // ✅ Thêm dòng này
+const updateBooking = async (id: number, data: UpdateBookingData) => {
+    try {
+        const booking = await prisma.booking.findUnique({
+            where: { id },
+            include: { roomBookings: true }
+        });
 
-    const updatedBooking = await prisma.booking.update({
-        where: { id },
-        data: updateData,
-        include: {
-            roomBookings: { include: { room: true } },
-            user: true
+        if (!booking) {
+            throw new Error("Booking không tồn tại");
         }
-    });
 
-    return updatedBooking;
-}
+        // Validate status transition
+        if (data.status) {
+            const validTransitions: Record<BookingStatus, BookingStatus[]> = {
+                'PENDING': ['CONFIRMED', 'CANCELLED'],
+                'CONFIRMED': ['CHECKED_IN', 'CANCELLED'],
+                'CHECKED_IN': ['CHECKED_OUT'],
+                'CHECKED_OUT': [],
+                'CANCELLED': []
+            };
+
+            if (!validTransitions[booking.status].includes(data.status)) {
+                throw new Error(
+                    `Không thể chuyển từ ${booking.status} sang ${data.status}`
+                );
+            }
+        }
+
+        if (data.checkInDate || data.checkOutDate) {
+            const checkIn = data.checkInDate || booking.checkInDate;
+            const checkOut = data.checkOutDate || booking.checkOutDate;
+
+            validateDates(checkIn, checkOut);
+
+            const roomId = data.roomId || booking.roomId;
+            if (roomId) {
+                const isAvailable = await isRoomAvailable(roomId, checkIn, checkOut, id);
+
+                if (!isAvailable) {
+                    throw new Error("Phòng không khả dụng cho khoảng thời gian này");
+                }
+            }
+        }
+
+        const updateData: any = {};
+        if (data.guestName !== undefined) updateData.guestName = data.guestName;
+        if (data.guestPhone !== undefined) updateData.guestPhone = data.guestPhone;
+        if (data.guestEmail !== undefined) updateData.guestEmail = data.guestEmail;
+        if (data.guestCount !== undefined) updateData.guestCount = data.guestCount;
+        if (data.checkInDate) updateData.checkInDate = data.checkInDate;
+        if (data.checkOutDate) updateData.checkOutDate = data.checkOutDate;
+        if (data.specialRequest !== undefined) updateData.specialRequest = data.specialRequest;
+        if (data.status) updateData.status = data.status;
+
+        const updated = await prisma.booking.update({
+            where: { id },
+            data: updateData,
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        phone: true,
+                        username: true
+                    }
+                },
+                roomBookings: {
+                    include: { room: true }
+                },
+                payment: true
+            }
+        });
+
+        return updated;
+    } catch (error) {
+        console.error("Error updating booking:", error);
+        throw error;
+    }
+};
 
 const deleteBooking = async (id: number) => {
-    const booking = await prisma.booking.findUnique({
-        where: { id }
-    });
+    try {
+        const booking = await prisma.booking.findUnique({
+            where: { id }
+        });
 
-    if (!booking) {
-        throw new Error("Booking không tồn tại");
+        if (!booking) {
+            throw new Error("Booking không tồn tại");
+        }
+
+        if (!['PENDING', 'CANCELLED'].includes(booking.status)) {
+            throw new Error(
+                `Không thể xóa booking ở trạng thái ${booking.status}`
+            );
+        }
+
+        await prisma.roomBooking.deleteMany({
+            where: { bookingId: id }
+        });
+
+        await prisma.booking.delete({
+            where: { id }
+        });
+    } catch (error) {
+        console.error("Error deleting booking:", error);
+        throw error;
     }
-
-    // Không cho xóa booking đã confirmed
-    if (['CONFIRMED', 'CHECKED_IN', 'CHECKED_OUT'].includes(booking.status)) {
-        throw new Error("Không thể xóa booking đã xác nhận");
-    }
-
-    // Delete room bookings first (foreign key constraint)
-    await prisma.roomBooking.deleteMany({
-        where: { bookingId: id }
-    });
-
-    // Delete booking
-    await prisma.booking.delete({
-        where: { id }
-    });
-}
+};
 
 export {
     getAllBookings,
@@ -263,5 +347,6 @@ export {
     updateBooking,
     deleteBooking,
     getAvailableRooms,
-    calculateNights
-}
+    calculateNights,
+    validateDates
+};

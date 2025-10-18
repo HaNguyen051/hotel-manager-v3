@@ -39,6 +39,7 @@ import {
 // Import Middleware
 import { isLogin, isAuthenticated, isAdmin } from "../middleware/auth";
 import { getAdminBookingPage, getCreateBookingPage, getViewBookingPage, postCreateBooking, postDeleteBooking, postUpdateBooking } from "controllers/admin/booking.controller";
+import { getViewPaymentPage, postCancelPayment, postConfirmPayment, postCreatePayment } from "controllers/admin/payment.controller";
 
 const router = express.Router();
 
@@ -70,9 +71,9 @@ const webRoutes = (app: Express) => {
 
     // ==================== USER ROUTES (Authenticated) ====================
     // Profile - Cần đăng nhập (cả Admin và User đều vào được)
-    router.get("/profile", isAuthenticated, (req, res) => {
-        res.render("client/profile/index", { user: req.user });
-    });
+    // router.get("/profile", isAuthenticated, (req, res) => {
+    //     res.render("client/profile/index", { user: req.user });
+    // });
 
     // Các route cho user xem phòng, đặt phòng (nếu có)
     // router.get("/rooms", isAuthenticated, getRoomsPage);
@@ -99,16 +100,19 @@ const webRoutes = (app: Express) => {
     router.post("/admin/delete-room/:id", isAuthenticated, isAdmin, postDeleteRoom);
 
     // ===== BOOKING MANAGEMENT =====
-
-    router.get("/admin/booking", isAuthenticated , isAdmin ,  getAdminBookingPage);
-    router.get("/admin/create-booking", isAdmin, getCreateBookingPage);
-    router.post("/admin/handle-create-booking", isAdmin, postCreateBooking);
-    router.get("/admin/view-booking/:id", isAdmin, getViewBookingPage);
-    router.post("/admin/update-booking", isAdmin, postUpdateBooking);
-    router.post("/admin/delete-booking/:id", isAdmin, postDeleteBooking);
+    router.get("/admin/booking", isAuthenticated, isAdmin, getAdminBookingPage);
+    router.get("/admin/create-booking", isAuthenticated, isAdmin, getCreateBookingPage);
+    router.post("/admin/handle-create-booking", isAuthenticated, isAdmin, postCreateBooking);
+    router.get("/admin/view-booking/:id", isAuthenticated, isAdmin, getViewBookingPage);
+    router.post("/admin/update-booking", isAuthenticated, isAdmin, postUpdateBooking);
+    router.post("/admin/delete-booking/:id", isAuthenticated, isAdmin, postDeleteBooking);
 
     // ===== PAYMENT MANAGEMENT =====
     router.get("/admin/payment", isAuthenticated, isAdmin, getAdminPaymentPage);
+    router.post("/admin/handle-create-payment", isAuthenticated, isAdmin, postCreatePayment);
+    router.get("/admin/view-payment/:id", isAuthenticated, isAdmin, getViewPaymentPage);
+    router.post("/admin/confirm-payment/:id", isAuthenticated, isAdmin, postConfirmPayment);
+    router.post("/admin/cancel-payment/:id", isAuthenticated, isAdmin, postCancelPayment);
 
     // Apply routes to app
     app.use("/", router);

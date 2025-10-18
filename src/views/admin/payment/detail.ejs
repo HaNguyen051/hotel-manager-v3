@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+    <title>Payment Detail - Hotel Manager</title>
+    <link href="/admin/css/styles.css" rel="stylesheet" />
+    <script
+      src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"
+      crossorigin="anonymous"
+    ></script>
+  </head>
+
+  <body class="sb-nav-fixed">
+    <%- include('../layout/header'); -%>
+
+    <div id="layoutSidenav">
+      <%- include('../layout/sidenav'); -%>
+      <div id="layoutSidenav_content">
+        <main>
+          <div class="container-fluid px-4">
+            <h1 class="mt-4">Chi tiết Thanh toán</h1>
+            <ol class="breadcrumb mb-4">
+              <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
+              <li class="breadcrumb-item">
+                <a href="/admin/payment">Thanh toán</a>
+              </li>
+              <li class="breadcrumb-item active">Chi tiết</li>
+            </ol>
+
+            <div class="row">
+              <div class="col-lg-8 mx-auto">
+                <% if (error) { %>
+                <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+
+                <!-- Payment Info -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5>Thông tin Thanh toán</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-6">
+                        <p><strong>ID:</strong> #<%= payment.id %></p>
+                        <p>
+                          <strong>Booking ID:</strong>
+                          <a
+                            href="/admin/view-booking/<%= payment.booking.id %>"
+                          >
+                            #<%= payment.booking.id %>
+                          </a>
+                        </p>
+                        <p>
+                          <strong>Số tiền:</strong> <%=
+                          payment.amount.toLocaleString('vi-VN') %>đ
+                        </p>
+                      </div>
+                      <div class="col-6">
+                        <p>
+                          <strong>Phương thức:</strong>
+                          <% if (payment.method === 'CASH') { %>
+                          <span class="badge bg-secondary">Tiền mặt</span>
+                          <% } else if (payment.method === 'CARD') { %>
+                          <span class="badge bg-primary">Thẻ</span>
+                          <% } else if (payment.method === 'BANK_TRANSFER') { %>
+                          <span class="badge bg-info">Chuyển khoản</span>
+                          <% } else if (payment.method === 'MOBILE_PAYMENT') {
+                          %>
+                          <span class="badge bg-warning">Ví điện tử</span>
+                          <% } %>
+                        </p>
+                        <p>
+                          <strong>Trạng thái:</strong>
+                          <% if (payment.status === 'PENDING') { %>
+                          <span class="badge bg-warning">Chờ thanh toán</span>
+                          <% } else if (payment.status === 'SUCCESS') { %>
+                          <span class="badge bg-success">Thành công</span>
+                          <% } else if (payment.status === 'FAILED') { %>
+                          <span class="badge bg-danger">Thất bại</span>
+                          <% } else if (payment.status === 'REFUNDED') { %>
+                          <span class="badge bg-secondary">Đã hoàn</span>
+                          <% } %>
+                        </p>
+                      </div>
+                    </div>
+                    <hr />
+                    <div class="row">
+                      <div class="col-6">
+                        <p>
+                          <strong>Transaction ID:</strong> <%=
+                          payment.transactionId || 'Chưa có' %>
+                        </p>
+                        <p>
+                          <strong>Ngày tạo:</strong> <%= new
+                          Date(payment.createdAt).toLocaleString('vi-VN') %>
+                        </p>
+                      </div>
+                      <div class="col-6">
+                        <p>
+                          <strong>Ngày thanh toán:</strong> <%= payment.paidAt ?
+                          new Date(payment.paidAt).toLocaleString('vi-VN') :
+                          'Chưa thanh toán' %>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Booking Info -->
+                <div class="card mb-4">
+                  <div class="card-header">
+                    <h5>Thông tin Booking</h5>
+                  </div>
+                  <div class="card-body">
+                    <div class="row">
+                      <div class="col-6">
+                        <p>
+                          <strong>Khách:</strong> <%= payment.booking.guestName
+                          %>
+                        </p>
+                        <p>
+                          <strong>Điện thoại:</strong> <%=
+                          payment.booking.guestPhone %>
+                        </p>
+                        <p>
+                          <strong>Email:</strong> <%= payment.booking.guestEmail
+                          || 'N/A' %>
+                        </p>
+                        <p>
+                          <strong>Số lượng khách:</strong> <%=
+                          payment.booking.guestCount %>
+                        </p>
+                      </div>
+                      <div class="col-6">
+                        <p>
+                          <strong>Check-in:</strong> <%= new
+                          Date(payment.booking.checkInDate).toLocaleDateString('vi-VN')
+                          %>
+                        </p>
+                        <p>
+                          <strong>Check-out:</strong> <%= new
+                          Date(payment.booking.checkOutDate).toLocaleDateString('vi-VN')
+                          %>
+                        </p>
+                        <p>
+                          <strong>Tổng tiền:</strong>
+                          <strong
+                            ><%=
+                            payment.booking.totalPrice.toLocaleString('vi-VN')
+                            %>đ</strong
+                          >
+                        </p>
+                        <p>
+                          <strong>Trạng thái:</strong>
+                          <% if (payment.booking.status === 'PENDING') { %>
+                          <span class="badge bg-warning">Chờ xác nhận</span>
+                          <% } else if (payment.booking.status === 'CONFIRMED')
+                          { %>
+                          <span class="badge bg-success">Đã xác nhận</span>
+                          <% } else if (payment.booking.status === 'CHECKED_IN')
+                          { %>
+                          <span class="badge bg-info">Đang ở</span>
+                          <% } %>
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Action Section -->
+                <% if (payment.status === 'PENDING') { %>
+                <div class="card">
+                  <div class="card-header">
+                    <h5>Xác nhận Thanh toán</h5>
+                  </div>
+                  <div class="card-body">
+                    <form
+                      action="/admin/confirm-payment/<%= payment.id %>"
+                      method="post"
+                    >
+                      <div class="mb-3">
+                        <label class="form-label">Transaction ID *</label>
+                        <input
+                          type="text"
+                          name="transactionId"
+                          class="form-control"
+                          required
+                          placeholder="Nhập mã giao dịch từ payment gateway"
+                        />
+                      </div>
+                      <div class="mb-3">
+                        <button type="submit" class="btn btn-success">
+                          Xác nhận Thanh toán
+                        </button>
+                        <a href="/admin/payment" class="btn btn-secondary"
+                          >Quay lại</a
+                        >
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <% } else { %>
+                <div class="card">
+                  <div class="card-body">
+                    <div class="alert alert-info">
+                      Payment này không ở trạng thái PENDING nên không thể thao
+                      tác.
+                    </div>
+                    <a href="/admin/payment" class="btn btn-secondary"
+                      >Quay lại</a
+                    >
+                  </div>
+                </div>
+                <% } %>
+              </div>
+            </div>
+          </div>
+        </main>
+        <%- include('../layout/footer'); -%>
+      </div>
+    </div>
+    <script
+      src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"
+      crossorigin="anonymous"
+    ></script>
+    <script src="/admin/js/scripts.js"></script>
+  </body>
+</html>
