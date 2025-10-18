@@ -1,127 +1,194 @@
-// ==================== src/controllers/admin/payment.controller.ts ====================
-import { Request, Response } from "express";
-import {
-    getAllPayments,
-    getPaymentById,
-    getPaymentByBookingId,
-    createPayment,
-    confirmPayment,
-    cancelPayment
-} from "services/admin/payment.service";
-import { getBookingById as getBookingByIdService } from "services/admin/booking.service";
-import { PaymentMethod } from "@prisma/client";
+// // src/controllers/admin/payment.controller.ts
+// import { Request, Response } from "express";
+// import {
+//     getAllPayments,
+//     getPaymentById,
+//     getPaymentByBookingId,
+//     handleCreatePayment,
+//     updatePaymentStatus,
+//     updatePaymentMethod,
+//     handleDeletePayment,
+//     getPaymentStatistics
+// } from "services/admin/payment.service";
+// import { PaymentMethod, PaymentStatus } from "@prisma/client";
+// import { prisma } from "config/client";
 
+// // Get payment list page
+// const getPaymentListPage = async (req: Request, res: Response) => {
+//     try {
+//         const payments = await getAllPayments();
+//         const statistics = await getPaymentStatistics();
 
-const postCreatePayment = async (req: Request, res: Response) => {
-    const { bookingId, paymentMethod } = req.body;
-    const { session } = req as any;
+//         return res.render("admin/payment/show.ejs", {
+//             payments,
+//             statistics
+//         });
+//     } catch (error) {
+//         console.error("Error getting payments:", error);
+//         return res.status(500).send("Internal Server Error");
+//     }
+// };
 
-    try {
-        if (!bookingId || !paymentMethod) {
-            throw new Error("Booking và phương thức thanh toán là bắt buộc");
-        }
+// // Get create payment page
+// const getCreatePaymentPage = async (req: Request, res: Response) => {
+//     try {
+//         // Lấy danh sách bookings chưa có payment
+//         const bookings = await prisma.booking.findMany({
+//             where: {
+//                 payment: null,
+//                 status: {
+//                     in: ["PENDING", "CONFIRMED"]
+//                 }
+//             },
+//             include: {
+//                 user: {
+//                     select: {
+//                         id: true,
+//                         username: true,
+//                         fullName: true
+//                     }
+//                 },
+//                 roomBookings: {
+//                     include: {
+//                         room: {
+//                             select: {
+//                                 name: true
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         });
 
-        const booking = await getBookingByIdService(parseInt(bookingId));
+//         return res.render("admin/payment/create.ejs", {
+//             bookings,
+//             paymentMethods: Object.values(PaymentMethod),
+//             paymentStatuses: Object.values(PaymentStatus)
+//         });
+//     } catch (error) {
+//         console.error("Error getting create payment page:", error);
+//         return res.status(500).send("Internal Server Error");
+//     }
+// };
 
-        if (!booking) {
-            throw new Error("Booking không tồn tại");
-        }
+// // Post create payment
+// const postCreatePayment = async (req: Request, res: Response) => {
+//     try {
+//         const { bookingId, userId, paymentMethod, paymentRef } = req.body;
 
-        const payment = await createPayment({
-            bookingId: parseInt(bookingId),
-            paymentMethod: paymentMethod as PaymentMethod
-        });
+//         await handleCreatePayment(
+//             +bookingId,
+//             +userId,
+//             paymentMethod as PaymentMethod,
+//             paymentRef || undefined
+//         );
 
-        session.messages = [
-            `✅ Tạo payment thành công! Số tiền: ${booking.totalPrice.toLocaleString('vi-VN')}đ`
-        ];
-        session.save();
+//         return res.redirect("/admin/payment");
+//     } catch (error: any) {
+//         console.error("Error creating payment:", error);
+//         return res.status(500).send(`Error creating payment: ${error.message}`);
+//     }
+// };
 
-        return res.redirect("/admin/payment");
-    } catch (error: any) {
-        const payments = await getAllPayments();
-        session.messages = [`❌ ${error.message}`];
-        session.save();
+// // Get view/edit payment page
+// const getViewPayment = async (req: Request, res: Response) => {
+//     try {
+//         const { id } = req.params;
+//         const payment = await getPaymentById(id);
 
-        return res.render("admin/payment/show.ejs", {
-            payments,
-            error: error.message
-        });
-    }
-};
+//         if (!payment) {
+//             return res.status(404).send("Payment not found");
+//         }
 
-const getViewPaymentPage = async (req: Request, res: Response) => {
-    const { id } = req.params;
+//         return res.render("admin/payment/detail.ejs", {
+//             payment,
+//             paymentMethods: Object.values(PaymentMethod),
+//             paymentStatuses: Object.values(PaymentStatus)
+//         });
+//     } catch (error) {
+//         console.error("Error getting payment:", error);
+//         return res.status(500).send("Internal Server Error");
+//     }
+// };
 
-    try {
-        const payment = await getPaymentById(parseInt(id));
+// // Post update payment status
+// const postUpdatePaymentStatus = async (req: Request, res: Response) => {
+//     try {
+//         const { id } = req.params;
+//         const { status, paymentRef } = req.body;
 
-        if (!payment) {
-            return res.status(404).render("status/404.ejs", {
-                message: "Payment không tồn tại"
-            });
-        }
+//         await updatePaymentStatus(
+//             id,
+//             status as PaymentStatus,
+//             paymentRef || undefined
+//         );
 
-        return res.render("admin/payment/detail.ejs", {
-            payment,
-            error: undefined
-        });
-    } catch (error: any) {
-        console.error("Error:", error);
-        return res.status(400).render("status/error.ejs", {
-            message: error.message
-        });
-    }
-};
+//         return res.redirect("/admin/payment");
+//     } catch (error: any) {
+//         console.error("Error updating payment status:", error);
+//         return res.status(500).send(`Error: ${error.message}`);
+//     }
+// };
 
-const postConfirmPayment = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { paymentRef } = req.body;
-    const { session } = req as any;
+// // Post update payment method
+// const postUpdatePaymentMethod = async (req: Request, res: Response) => {
+//     try {
+//         const { id } = req.params;
+//         const { paymentMethod } = req.body;
 
-    try {
-        if (!paymentRef) {
-            throw new Error("Payment Ref là bắt buộc");
-        }
+//         await updatePaymentMethod(id, paymentMethod as PaymentMethod);
+//         return res.redirect("/admin/payment");
+//     } catch (error: any) {
+//         console.error("Error updating payment method:", error);
+//         return res.status(500).send(`Error: ${error.message}`);
+//     }
+// };
 
-        const payment = await confirmPayment(parseInt(id), paymentRef);
+// // Post delete payment
+// const postDeletePayment = async (req: Request, res: Response) => {
+//     try {
+//         const { id } = req.params;
+//         await handleDeletePayment(id);
+//         return res.redirect("/admin/payment");
+//     } catch (error: any) {
+//         console.error("Error deleting payment:", error);
+//         return res.status(500).send(`Error: ${error.message}`);
+//     }
+// };
 
-        session.messages = [
-            `✅ Xác nhận thanh toán thành công! Booking #${payment.bookingId}`
-        ];
-        session.save();
+// // Get payment by booking (for creating payment from booking detail page)
+// const getPaymentByBooking = async (req: Request, res: Response) => {
+//     try {
+//         const { bookingId } = req.params;
+//         const payment = await getPaymentByBookingId(bookingId);
 
-        return res.redirect("/admin/payment");
-    } catch (error: any) {
-        session.messages = [`❌ ${error.message}`];
-        session.save();
+//         if (!payment) {
+//             return res.status(404).json({
+//                 success: false,
+//                 message: "Payment not found"
+//             });
+//         }
 
-        return res.redirect("/admin/payment");
-    }
-};
+//         return res.json({
+//             success: true,
+//             data: payment
+//         });
+//     } catch (error) {
+//         console.error("Error getting payment by booking:", error);
+//         return res.status(500).json({
+//             success: false,
+//             message: "Error getting payment"
+//         });
+//     }
+// };
 
-const postCancelPayment = async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const { session } = req as any;
-
-    try {
-        await cancelPayment(parseInt(id));
-
-        session.messages = [`✅ Hủy payment thành công!`];
-        session.save();
-
-        return res.redirect("/admin/payment");
-    } catch (error: any) {
-        session.messages = [`❌ ${error.message}`];
-        session.save();
-
-        return res.redirect("/admin/payment");
-    }
-};
-
-export {
-    postCreatePayment,
-    getViewPaymentPage,
-    postConfirmPayment,
-    postCancelPayment
-};
+// export {
+//     getPaymentListPage,
+//     getCreatePaymentPage,
+//     postCreatePayment,
+//     getViewPayment,
+//     postUpdatePaymentStatus,
+//     postUpdatePaymentMethod,
+//     postDeletePayment,
+//     getPaymentByBooking
+// };

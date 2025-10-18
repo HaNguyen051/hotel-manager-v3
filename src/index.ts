@@ -2,7 +2,7 @@
 
 import express, {Express} from "express" ;
 import 'dotenv/config'
-
+import flash from 'connect-flash'; // <--- 1. IMPORT FLASH
 import session from 'express-session';
 import { PrismaSessionStore } from "@quixo3/prisma-session-store";
 import { PrismaClient } from "@prisma/client";
@@ -49,11 +49,17 @@ app.use(session({
 }))
 configPassportLocal();
 app.use(passport.initialize());
-app.use(passport.authenticate('session'));
+app.use(passport.session()); // <--- Đảm bảo là dòng này
 
+app.use(flash());
 
-
-
+app.use((req, res, next) => {
+    res.locals.user = req.user || null; // Giữ lại user
+    // Lấy flash messages và gán vào res.locals để view sử dụng
+    res.locals.success_msg = req.flash('success_msg');
+    res.locals.error_msg = req.flash('error_msg');
+    next();
+});
 //config global
 
 app.use((req, res, next) => {

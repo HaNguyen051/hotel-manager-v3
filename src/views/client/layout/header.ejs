@@ -180,9 +180,11 @@
                         aria-labelledby="dropdownMenuLink"
                       >
                         <li class="d-flex align-items-center flex-column">
-                          <img class="avatar-dropdown-img" src="<%= user.avatar
-                          ? '/images/' + user.avatar :
-                          '/client/img/default-avatar.png' %>" alt= />
+                          <img
+                            class="avatar-dropdown-img"
+                            src="<%= user.avatar ? '/images/avatar/' + user.avatar : '/client/img/default-avatar.png' %>"
+                            alt="User Avatar"
+                          />
                           <div class="text-center my-3 fw-bold">
                             <%= user.fullName || user.username %>
                           </div>
@@ -193,7 +195,7 @@
                           >
                         </li>
                         <li>
-                          <a class="dropdown-item" href="/booking-history"
+                          <a class="dropdown-item" href="/my-bookings"
                             >Lịch sử đặt phòng</a
                           >
                         </li>

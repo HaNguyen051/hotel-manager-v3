@@ -1,58 +1,37 @@
-// ==================== src/routes/web.ts ====================
+// ==================== src/routes/web.ts (Đã sửa) ====================
 import express, { Express } from "express";
 import passport from "passport";
 import fileUploadMiddleware from "../middleware/multer";
 
-// Import Admin Controllers
-import {
-    getDashboardPage,
-    getAdminPaymentPage,
-    getAdminRoomPage,
-    getAdminUserPage
-} from "controllers/admin/dashboard.controller";
-
-import {
-    getCreateRoomPage,
-    getViewRoom,
-    postCreateRoom,
-    postDeleteRoom,
-    postUpdateRoom
-} from "controllers/admin/room.controller";
-
-import {
-    getCreateUserPage,
-    getViewUser,
-    postCreateUser,
-    postDeleteUser,
-    postUpdateUser
-} from "controllers/user.controller";
-
-// Import Auth Controllers
-import {
-    getLoginPage,
-    getRegisterPage,
-    postRegister,
-    getSuccessRedirectPage,
-    postLogout
-} from "controllers/client/auth.controller";
-
-// Import Middleware
+// ... (Các import khác giữ nguyên)
 import { isLogin, isAuthenticated, isAdmin } from "../middleware/auth";
 import { getAdminBookingPage, getCreateBookingPage, getViewBookingPage, postCreateBooking, postDeleteBooking, postUpdateBooking } from "controllers/admin/booking.controller";
-import { getViewPaymentPage, postCancelPayment, postConfirmPayment, postCreatePayment } from "controllers/admin/payment.controller";
+import { getAdminPaymentPage, getAdminRoomPage, getAdminUserPage, getDashboardPage } from "controllers/admin/dashboard.controller";
+// import { getViewPaymentPage, postCancelPayment, postConfirmPayment, postCreatePayment } from "controllers/admin/payment.controller";
+import { getRoomsPage } from "controllers/client/room.controller";
+import { getTeamPage } from "controllers/team.controller";
+import { getServicePage } from "controllers/service.controller";
+import { getLoginPage, getRegisterPage, getSuccessRedirectPage, postLogout, postRegister } from "controllers/client/auth.controller";
+import { getBookingPage, getBookingSuccess, postAvailableRooms, postBookingSubmit } from "controllers/client/booking.controller";
+import { getCreateUserPage, getViewUser, postCreateUser, postDeleteUser, postUpdateUser } from "controllers/user.controller";
+import { getCreateRoomPage, getViewRoom, postCreateRoom, postDeleteRoom, postUpdateRoom } from "controllers/admin/room.controller";
+import { cancelMyBooking, getMyBookingsPage, getProfilePage, updateProfile } from "controllers/client/profile.controller";
+// ... (Các import khác giữ nguyên)
 
 const router = express.Router();
 
 const webRoutes = (app: Express) => {
 
     // ==================== PUBLIC ROUTES ====================
-    // Trang chủ - Ai cũng truy cập được
     router.get("/", (req, res) => {
         res.render("client/home/show");
     });
+    router.get("/rooms", getRoomsPage);
+    router.get("/team", getTeamPage);
+    router.get("/service", getServicePage);
+
 
     // ==================== AUTH ROUTES ====================
-    // Login & Register - Chỉ người chưa đăng nhập
     router.get("/login", isLogin, getLoginPage);
     router.post("/login", passport.authenticate("local", {
         successRedirect: "/success-redirect",
@@ -60,61 +39,65 @@ const webRoutes = (app: Express) => {
         failureMessage: true
     }));
 
-    router.get("/register", isLogin, getRegisterPage);
-    router.post("/register", isLogin, postRegister);
-
-    // Redirect sau khi login thành công
+    router.get("/register",  getRegisterPage);
+    router.post("/register",  postRegister);
     router.get("/success-redirect", isAuthenticated, getSuccessRedirectPage);
-
-    // Logout - Cần đăng nhập
     router.post("/logout", isAuthenticated, postLogout);
 
-    // ==================== USER ROUTES (Authenticated) ====================
-    // Profile - Cần đăng nhập (cả Admin và User đều vào được)
-    // router.get("/profile", isAuthenticated, (req, res) => {
-    //     res.render("client/profile/index", { user: req.user });
-    // });
+    // ==================== CLIENT BOOKING ROUTES (Đã sửa) ====================
+    // SỬA: Chỉ giữ lại MỘT route /booking và yêu cầu đăng nhập
+    router.get("/booking", isAuthenticated, getBookingPage);
+    router.post("/booking/available-rooms", isAuthenticated, postAvailableRooms); // Thêm isAuthenticated
+    router.post("/booking/submit", isAuthenticated, postBookingSubmit);       // Thêm isAuthenticated
+    router.get("/booking/success", isAuthenticated, getBookingSuccess);      // Thêm isAuthenticated
 
-    // Các route cho user xem phòng, đặt phòng (nếu có)
-    // router.get("/rooms", isAuthenticated, getRoomsPage);
-    // router.get("/booking", isAuthenticated, getBookingPage);
+
+    // Profile Page
+    router.get("/profile", isAuthenticated, getProfilePage);
+    // Route xử lý cập nhật profile (POST) - Thêm dòng này
+    router.post("/profile", isAuthenticated, fileUploadMiddleware("avatar", "images/avatar"), updateProfile); // Dùng multer cho avatar
+
+    // Booking History Page
+    router.get("/my-bookings", isAuthenticated, getMyBookingsPage);
+    router.post("/my-bookings/:id/cancel", isAuthenticated, cancelMyBooking);
+
 
     // ==================== ADMIN ROUTES - CHỈ ADMIN ====================
-    // Dashboard
     router.get("/admin", isAuthenticated, isAdmin, getDashboardPage);
 
     // ===== USER MANAGEMENT =====
+    // Gợi ý: Các controller này nên được chuyển vào thư mục admin
     router.get("/admin/user", isAuthenticated, isAdmin, getAdminUserPage);
     router.get("/admin/create-user", isAuthenticated, isAdmin, getCreateUserPage);
-    router.post("/admin/handle-create-user", isAuthenticated, isAdmin, fileUploadMiddleware("avatar"), postCreateUser);
+    router.post("/admin/handle-create-user", isAuthenticated, isAdmin, fileUploadMiddleware("avatar", "images/avatar"), postCreateUser); // Thêm subfolder cho avatar
     router.get("/admin/view-user/:id", isAuthenticated, isAdmin, getViewUser);
-    router.post("/admin/update-user", isAuthenticated, isAdmin, fileUploadMiddleware("avatar"), postUpdateUser);
+    router.post("/admin/update-user", isAuthenticated, isAdmin, fileUploadMiddleware("avatar", "images/avatar"), postUpdateUser);
     router.post("/admin/delete-user/:id", isAuthenticated, isAdmin, postDeleteUser);
 
     // ===== ROOM MANAGEMENT =====
     router.get("/admin/room", isAuthenticated, isAdmin, getAdminRoomPage);
-    router.get("/admin/create-room", isAuthenticated, isAdmin, getCreateRoomPage);
-    router.post("/admin/handle-create-room", isAuthenticated, isAdmin, fileUploadMiddleware("image","images/product"), postCreateRoom);
+    router.get("/admin/create-room", isAuthenticated, isAdmin, getCreateRoomPage );
+    router.post("/admin/handle-create-room", isAuthenticated, isAdmin, fileUploadMiddleware("image", "images/product"), postCreateRoom);
     router.get("/admin/view-room/:id", isAuthenticated, isAdmin, getViewRoom);
     router.post("/admin/update-room", isAuthenticated, isAdmin, fileUploadMiddleware("image", "images/product"), postUpdateRoom);
     router.post("/admin/delete-room/:id", isAuthenticated, isAdmin, postDeleteRoom);
 
-    // ===== BOOKING MANAGEMENT =====
-    router.get("/admin/booking", isAuthenticated, isAdmin, getAdminBookingPage);
-    router.get("/admin/create-booking", isAuthenticated, isAdmin, getCreateBookingPage);
-    router.post("/admin/handle-create-booking", isAuthenticated, isAdmin, postCreateBooking);
-    router.get("/admin/view-booking/:id", isAuthenticated, isAdmin, getViewBookingPage);
-    router.post("/admin/update-booking", isAuthenticated, isAdmin, postUpdateBooking);
-    router.post("/admin/delete-booking/:id", isAuthenticated, isAdmin, postDeleteBooking);
+    // ===== BOOKING MANAGEMENT (SỬA: Thêm isAuthenticated cho nhất quán) =====
+   router.get("/admin/booking", isAuthenticated, isAdmin, getAdminBookingPage);
+    router.get("/admin/booking/create", isAuthenticated, isAdmin, getCreateBookingPage);
+    router.post("/admin/booking/handle-create", isAuthenticated, isAdmin, postCreateBooking);
+    router.get("/admin/booking/detail/:id", isAuthenticated, isAdmin, getViewBookingPage);
+    router.post("/admin/booking/update", isAuthenticated, isAdmin, postUpdateBooking);
+    router.post("/admin/booking/delete/:id", isAuthenticated, isAdmin, postDeleteBooking);
 
-    // ===== PAYMENT MANAGEMENT =====
-    router.get("/admin/payment", isAuthenticated, isAdmin, getAdminPaymentPage);
-    router.post("/admin/handle-create-payment", isAuthenticated, isAdmin, postCreatePayment);
-    router.get("/admin/view-payment/:id", isAuthenticated, isAdmin, getViewPaymentPage);
-    router.post("/admin/confirm-payment/:id", isAuthenticated, isAdmin, postConfirmPayment);
-    router.post("/admin/cancel-payment/:id", isAuthenticated, isAdmin, postCancelPayment);
+    // // ===== PAYMENT MANAGEMENT =====
+    // router.get("/admin/payment", isAuthenticated, isAdmin, getAdminPaymentPage);
+    // router.post("/admin/handle-create-payment", isAuthenticated, isAdmin, postCreatePayment);
+    // router.get("/admin/view-payment/:id", isAuthenticated, isAdmin, getViewPaymentPage);
+    // router.post("/admin/confirm-payment/:id", isAuthenticated, isAdmin, postConfirmPayment);
+    // router.post("/admin/cancel-payment/:id", isAuthenticated, isAdmin, postCancelPayment);
 
-    // Apply routes to app
+    // Áp dụng router vào app
     app.use("/", router);
 };
 

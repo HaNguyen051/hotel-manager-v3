@@ -1,0 +1,169 @@
+<%- include('../layout/header'); -%>
+
+<div
+  class="container-fluid page-header mb-5 p-0"
+  style="background-image: url(/client/img/carousel-2.jpg)"
+>
+  <div class="container-fluid page-header-inner py-5">
+    <div class="container text-center pb-5">
+      <h1 class="display-3 text-white mb-3 animated slideInDown">
+        Đặt Phòng Thành Công
+      </h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb justify-content-center text-uppercase">
+          <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+          <li class="breadcrumb-item"><a href="/booking">Đặt phòng</a></li>
+          <li class="breadcrumb-item text-white active" aria-current="page">
+            Thành công
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</div>
+<div class="container-xxl py-5">
+  <div class="container">
+    <div class="row g-5 justify-content-center">
+      <div class="col-lg-8">
+        <div class="wow fadeInUp" data-wow-delay="0.2s">
+          <div class="alert alert-success text-center" role="alert">
+            <h4 class="alert-heading">
+              <i class="fas fa-check-circle me-2"></i>Đặt phòng thành công!
+            </h4>
+            <% if (typeof booking !== 'undefined' && booking) { %>
+            <p>
+              Cảm ơn bạn đã đặt phòng tại Hotelier. Yêu cầu đặt phòng của bạn đã
+              được ghi nhận với mã số <strong>#<%= booking.id %></strong>.
+            </p>
+            <p class="mb-0">
+              Chúng tôi sẽ sớm liên hệ với bạn qua điện thoại (<strong
+                ><%= booking.guestPhone %></strong
+              >) để xác nhận. Vui lòng kiểm tra email (nếu có) để xem lại thông
+              tin.
+            </p>
+            <% } else { %>
+            <p>Đã ghi nhận yêu cầu đặt phòng của bạn. Vui lòng chờ xác nhận.</p>
+            <% } %>
+          </div>
+
+          <% if (typeof booking !== 'undefined' && booking) { %> <%# Only show
+          card if booking exists %>
+          <div class="card shadow-sm mt-4">
+            <div class="card-header bg-primary text-white">
+              <h5 class="mb-0">
+                <i class="fas fa-receipt me-2"></i>Tóm Tắt Thông Tin Đặt Phòng
+              </h5>
+            </div>
+            <div class="card-body">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <h6>
+                    <i class="fas fa-user me-2 text-primary"></i>Thông Tin Khách
+                  </h6>
+                  <p class="mb-1">
+                    <strong>Tên:</strong> <%= booking.guestName %>
+                  </p>
+                  <p class="mb-1">
+                    <strong>Điện thoại:</strong> <%= booking.guestPhone %>
+                  </p>
+                  <p class="mb-1">
+                    <strong>Email:</strong> <%= booking.guestEmail ?
+                    booking.guestEmail : 'Chưa cung cấp' %>
+                  </p>
+                  <p class="mb-0">
+                    <strong>Số người:</strong> <%= booking.guestCount %>
+                  </p>
+                </div>
+
+                <div class="col-md-6">
+                  <h6>
+                    <i class="fas fa-calendar-alt me-2 text-primary"></i>Chi
+                    Tiết Lưu Trú
+                  </h6>
+                  <p class="mb-1">
+                    <strong>Nhận phòng:</strong> <%= new
+                    Date(booking.checkInDate).toLocaleString('vi-VN', {
+                    dateStyle: 'short', timeStyle: 'short' }) %>
+                  </p>
+                  <p class="mb-1">
+                    <strong>Trả phòng:</strong> <%= new
+                    Date(booking.checkOutDate).toLocaleString('vi-VN', {
+                    dateStyle: 'short', timeStyle: 'short' }) %>
+                  </p>
+                  <p class="mb-0">
+                    <strong>Số đêm:</strong> <%= (typeof nights !== 'undefined')
+                    ? nights : 'N/A' %>
+                  </p>
+                </div>
+
+                <hr class="my-3" />
+
+                <div class="col-12">
+                  <h6>
+                    <i class="fas fa-bed me-2 text-primary"></i>Thông Tin Phòng
+                  </h6>
+                  <% if (booking.roomBookings && booking.roomBookings.length >
+                  0) { %> <% booking.roomBookings.forEach(function(rb) { %> <%
+                  if (rb && rb.room) { %>
+                  <p class="mb-1">
+                    <strong>Phòng:</strong> <%= rb.room.name %> (<%=
+                    rb.room.type %>)
+                  </p>
+                  <p class="mb-0">
+                    <strong>Giá/đêm:</strong> <%= rb.room.price ?
+                    rb.room.price.toLocaleString('vi-VN') : 'N/A' %> đ
+                  </p>
+                  <% } else { %>
+                  <p class="text-danger small">
+                    Lỗi: Không thể tải thông tin phòng.
+                  </p>
+                  <% } %> <% }); %> <% } else { %>
+                  <p class="text-muted">Không có thông tin phòng.</p>
+                  <% } %>
+                </div>
+
+                <% if (booking.specialRequest) { %>
+                <div class="col-12">
+                  <h6>
+                    <i class="fas fa-concierge-bell me-2 text-primary"></i>Yêu
+                    Cầu Đặc Biệt
+                  </h6>
+                  <p class="mb-0 fst-italic">"<%= booking.specialRequest %>"</p>
+                </div>
+                <% } %>
+
+                <hr class="my-3" />
+
+                <div class="col-12 text-end">
+                  <h5 class="mb-0">
+                    Tổng Cộng:
+                    <span class="text-danger fw-bold"
+                      ><%= booking.totalPrice ?
+                      booking.totalPrice.toLocaleString('vi-VN') : 'N/A' %>
+                      đ</span
+                    >
+                  </h5>
+                  <small class="text-muted"
+                    >(Trạng thái hiện tại: <%= booking.status %>)</small
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <% } %> <%# End check if booking exists %>
+
+          <div class="text-center mt-4">
+            <a href="/" class="btn btn-secondary me-2"
+              ><i class="fas fa-home me-1"></i> Về Trang Chủ</a
+            >
+            <a href="/my-bookings" class="btn btn-outline-primary"
+              ><i class="fas fa-history me-1"></i> Xem Lịch Sử Đặt Phòng</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="margin-bottom: 200px"></div>
+<%- include('../layout/footer'); -%>
