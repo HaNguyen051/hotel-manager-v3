@@ -38,6 +38,34 @@
     <link href="/client/css/bootstrap.min.css" rel="stylesheet" />
 
     <link href="/client/css/style.css" rel="stylesheet" />
+
+    <style>
+      .dropdown-menu[data-bs-popper] {
+        min-width: 300px;
+        padding: 1.5rem !important;
+      }
+      .avatar-dropdown-img {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+      }
+      /* CSS để bật dropdown khi HOVER */
+      @media (min-width: 992px) {
+        .dropdown:hover .dropdown-menu {
+          display: block;
+          margin-top: 0;
+        }
+        /* Đảm bảo khối menu chiếm đủ không gian để căn đều */
+        .navbar-nav.justify-content-around {
+          flex-grow: 1; /* Cho phép khối menu co giãn */
+        }
+        .navbar-dark .navbar-nav .nav-link {
+          font-size: 1.1rem; /* Bạn có thể điều chỉnh giá trị này, ví dụ: 18px, 1.2rem,... */
+          /* font-weight: 500; */ /* Tùy chọn: Điều chỉnh độ đậm nếu cần */
+        }
+      }
+    </style>
   </head>
 
   <body>
@@ -58,27 +86,54 @@
         <div class="row gx-0">
           <div class="col-lg-3 bg-dark d-none d-lg-block">
             <a
-              href="index.html"
+              href="/"
               class="navbar-brand w-100 h-100 m-0 p-0 d-flex align-items-center justify-content-center"
             >
               <h1 class="m-0 text-primary text-uppercase">Hotelier</h1>
             </a>
           </div>
+         
           <div class="col-lg-9">
+            <% if (typeof user !== 'undefined' && user) { %>
             <div class="row gx-0 bg-white d-none d-lg-flex">
               <div class="col-lg-7 px-5 text-start">
                 <div class="h-100 d-inline-flex align-items-center py-2 me-4">
+                  <i class=" fa fa-user text-primary me-2"></i>
+                  <p class="mb-0"><%= user.fullName %></p>
+                </div>
+                <div class="h-100 d-inline-flex align-items-center py-2">
                   <i class="fa fa-envelope text-primary me-2"></i>
-                  <p class="mb-0">info@example.com</p>
+                  <p class="mb-0"><%=user.username %></p>
+                </div>
+              </div>
+              <% } else { %>
+              <div class="row gx-0 bg-white d-none d-lg-flex">
+              <div class="col-lg-7 px-5 text-start">
+                <div class="h-100 d-inline-flex align-items-center py-2 me-4">
+                  <i class="fa fa-envelope text-primary me-2"></i>
+                  <p class="mb-0"></p>
                 </div>
                 <div class="h-100 d-inline-flex align-items-center py-2">
                   <i class="fa fa-phone-alt text-primary me-2"></i>
-                  <p class="mb-0">+012 345 6789</p>
+                  <p class="mb-0"></p>
+                </div>
+              </div>
+                 <% } %>
+              <div class="col-lg-5 px-5 text-end">
+                <div class="d-inline-flex align-items-center py-2">
+                  <a class="me-3" href=""><i class="fab fa-facebook-f"></i></a>
+                  <a class="me-3" href=""><i class="fab fa-twitter"></i></a>
+                  <a class="me-3" href=""><i class="fab fa-linkedin-in"></i></a>
+                  <a class="me-3" href=""><i class="fab fa-instagram"></i></a>
+                  <a class="" href=""><i class="fab fa-youtube"></i></a>
                 </div>
               </div>
             </div>
-            <nav class="navbar navbar-expand-lg bg-dark navbar-dark p-3 p-lg-0">
-              <a href="index.html" class="navbar-brand d-block d-lg-none">
+
+            <nav
+              class="navbar navbar-expand-lg bg-dark navbar-dark p-3 px-lg-5"
+            >
+              <a href="/" class="navbar-brand d-block d-lg-none">
                 <h1 class="m-0 text-primary text-uppercase">Hotelier</h1>
               </a>
               <button
@@ -89,41 +144,71 @@
               >
                 <span class="navbar-toggler-icon"></span>
               </button>
+
               <div
                 class="collapse navbar-collapse justify-content-between"
                 id="navbarCollapse"
               >
-                <div class="navbar-nav mr-auto py-0">
-                  <a href="index.html" class="nav-item nav-link">Trang Chủ</a>
-                  <a href="about.html" class="nav-item nav-link"
-                    >Về Chúng Tôi</a
-                  >
-                  <a href="service.html" class="nav-item nav-link">Dịch Vụ</a>
-                  <a href="room.html" class="nav-item nav-link">Phòng</a>
-                  <!-- <div class="nav-item dropdown">
+                <div class="navbar-nav py-0 justify-content-around">
+                  <a href="/" class="nav-item nav-link">Trang Chủ</a>
+                  <a href="/about" class="nav-item nav-link">Về Chúng Tôi</a>
+                  <a href="/service" class="nav-item nav-link">Dịch Vụ</a>
+                  <a href="/room" class="nav-item nav-link">Phòng</a>
+                </div>
+
+                <div class="my-auto">
+                  <% if (typeof user !== 'undefined' && user) { %>
+                  <div class="dropdown">
                     <a
                       href="#"
-                      class="nav-link dropdown-toggle active"
+                      class="dropdown"
+                      role="button"
+                      id="dropdownMenuLink"
                       data-bs-toggle="dropdown"
-                      >Trang</a
+                      aria-expanded="false"
                     >
-                    <div class="dropdown-menu rounded-0 m-0">
-                      <a href="booking.html" class="dropdown-item active"
-                        >Đặt Phòng</a
-                      >
-                      <a href="team.html" class="dropdown-item">Đội Ngũ</a>
-                      <a href="testimonial.html" class="dropdown-item"
-                        >Phản Hồi</a
-                      >
-                    </div>
-                  </div> -->
-                  <!-- <a href="contact.html" class="nav-item nav-link">Liên Hệ</a> -->
+                      <i class="fas fa-user fa-2x text-white"></i>
+                    </a>
+                    <ul
+                      class="dropdown-menu"
+                      aria-labelledby="dropdownMenuLink"
+                    >
+                      <li class="d-flex align-items-center flex-column">
+                        <img
+                          class="avatar-dropdown-img"
+                          src="<%= user.avatar ? '/images/' + user.avatar : '/client/img/default-avatar.png' %>"
+                          alt=""
+                        />
+                        <div class="text-center my-3 fw-bold">
+                          <%= user.fullName || user.username %>
+                        </div>
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="/profile"
+                          >Quản lý tài khoản</a
+                        >
+                      </li>
+                      <li>
+                        <a class="dropdown-item" href="#">Lịch sử đặt phòng</a>
+                      </li>
+                      <li>
+                        <hr class="dropdown-divider" />
+                      </li>
+                      <li>
+                        <form method="post" action="/logout">
+                          <button class="dropdown-item text-danger">
+                            Đăng xuất
+                          </button>
+                        </form>
+                      </li>
+                    </ul>
+                  </div>
+                  <% } else { %>
+                  <a href="/login" class="a-login">
+                    <i class="fas fa-user fa-2x text-white"></i>
+                  </a>
+                  <% } %>
                 </div>
-                <a
-                  href="https://htmlcodex.com/hotel-html-template-pro"
-                  class="btn btn-primary rounded-0 py-4 px-md-5 d-none d-lg-block"
-                  >Đăng Nhập<i class="fa fa-arrow-right ms-3"></i
-                ></a>
               </div>
             </nav>
           </div>

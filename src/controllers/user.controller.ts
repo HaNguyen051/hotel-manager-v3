@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
 import { getAllRoles, getAllUsers, getUserById, handleCreateUser, handleDeleteUser, updateUserById } from "services/user.service";
 
-const getHomePage = async (req: Request, res: Response) => {
-    //get users
-    const users = await getAllUsers();
+// const getHomePage = async (req: Request, res: Response) => {
+//     //get users
+//     const users = await getAllUsers();
 
-    return res.render("home", {
-        users: users
-    });
-}
+//     return res.render("home", {
+//         users: users
+//     });
+// }
 
 const getCreateUserPage = async (req: Request, res: Response) => {
     const roles = await getAllRoles();
@@ -57,6 +57,6 @@ const postUpdateUser = async (req: Request, res: Response) => {
 }
 
 export {
-    getHomePage, getCreateUserPage, postCreateUser, postDeleteUser,
+ getCreateUserPage, postCreateUser, postDeleteUser,
     getViewUser, postUpdateUser
 };

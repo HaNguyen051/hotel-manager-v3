@@ -7,7 +7,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1, shrink-to-fit=no"
     />
-    <title>Manage Bookings - Hotel Manager</title>
+    <title>Manage Bookings - Hotel Management</title>
     <link href="/admin/css/styles.css" rel="stylesheet" />
     <script
       src="https://use.fontawesome.com/releases/v6.3.0/js/all.js"
@@ -23,96 +23,176 @@
       <div id="layoutSidenav_content">
         <main>
           <div class="container-fluid px-4">
-            <h1 class="mt-4">Manage Bookings</h1>
+            <h1 class="mt-4">Quản lý đặt phòng</h1>
             <ol class="breadcrumb mb-4">
               <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
               <li class="breadcrumb-item active">Bookings</li>
             </ol>
-            <div>
-              <% if (typeof error !== 'undefined') { %>
-              <div class="alert alert-danger"><%= error %></div>
-              <% } %>
-              <div
-                style="
-                  display: flex;
-                  justify-content: space-between;
-                  align-items: center;
-                "
-              >
-                <h5>Table Bookings:</h5>
-                <div>
-                  <a href="/admin/create-booking" class="btn btn-warning"
-                    >Create a new booking</a
+
+            <!-- Filter Tabs -->
+            <div class="card mb-4">
+              <div class="card-body">
+                <div class="btn-group w-100" role="group">
+                  <a
+                    href="/admin/booking"
+                    class="btn <%= filterStatus === 'all' ? 'btn-primary' : 'btn-outline-primary' %>"
                   >
+                    <i class="fas fa-list me-1"></i>Tất cả
+                  </a>
+                  <a
+                    href="/admin/booking?status=PENDING"
+                    class="btn <%= filterStatus === 'PENDING' ? 'btn-warning' : 'btn-outline-warning' %>"
+                  >
+                    <i class="fas fa-clock me-1"></i>Chờ xác nhận
+                  </a>
+                  <a
+                    href="/admin/booking?status=CONFIRMED"
+                    class="btn <%= filterStatus === 'CONFIRMED' ? 'btn-success' : 'btn-outline-success' %>"
+                  >
+                    <i class="fas fa-check-circle me-1"></i>Đã xác nhận
+                  </a>
+                  <a
+                    href="/admin/booking?status=CHECKED_IN"
+                    class="btn <%= filterStatus === 'CHECKED_IN' ? 'btn-info' : 'btn-outline-info' %>"
+                  >
+                    <i class="fas fa-door-open me-1"></i>Đang ở
+                  </a>
+                  <a
+                    href="/admin/booking?status=CHECKED_OUT"
+                    class="btn <%= filterStatus === 'CHECKED_OUT' ? 'btn-secondary' : 'btn-outline-secondary' %>"
+                  >
+                    <i class="fas fa-door-closed me-1"></i>Đã trả phòng
+                  </a>
+                  <a
+                    href="/admin/booking?status=CANCELLED"
+                    class="btn <%= filterStatus === 'CANCELLED' ? 'btn-danger' : 'btn-outline-danger' %>"
+                  >
+                    <i class="fas fa-times-circle me-1"></i>Đã hủy
+                  </a>
                 </div>
               </div>
-              <hr />
-              <table class="table table-hover table-bordered">
-                <thead>
-                  <th>Id</th>
-                  <th>Guest Name</th>
-                  <th>Guest Phone</th>
-                  <th>Check In</th>
-                  <th>Check Out</th>
-                  <th>Total Price</th>
-                  <th>Status</th>
-                  <th>Action</th>
-                </thead>
-                <tbody>
-                  <% bookings.forEach(function (booking) { %>
-                  <tr>
-                    <td><%= booking.id %></td>
-                    <td><%= booking.guestName %></td>
-                    <td><%= booking.guestPhone %></td>
-                    <td>
-                      <%= new
-                      Date(booking.checkInDate).toLocaleDateString('vi-VN') %>
-                    </td>
-                    <td>
-                      <%= new
-                      Date(booking.checkOutDate).toLocaleDateString('vi-VN') %>
-                    </td>
-                    <td><%= booking.totalPrice.toLocaleString() %> VND</td>
-                    <td>
-                      <span
-                        class="badge <%= booking.status === 'PENDING' ? 'bg-warning' : booking.status === 'CONFIRMED' ? 'bg-info' : booking.status === 'CHECKED_IN' ? 'bg-success' : 'bg-secondary' %>"
-                      >
-                        <%= booking.status %>
-                      </span>
-                    </td>
-                    <td>
-                      <div style="display: flex; gap: 10px">
-                        <form
-                          action="/admin/view-booking/<%= booking.id %>"
-                          method="get"
-                        >
-                          <button type="submit" class="btn btn-warning">
-                            View
-                          </button>
-                        </form>
-                        <form
-                          id="deleteForm-<%= booking.id %>"
-                          action="/admin/delete-booking/<%= booking.id %>"
-                          method="post"
-                          style="display: none"
-                        ></form>
+            </div>
 
-                        <button
-                          type="button"
-                          class="btn btn-danger"
-                          onclick="confirmDelete('Delete booking #<%= booking.id %>?', function() {
-                                showToast('warning', 'Deleting...', '', 1000);
-                                document.getElementById('deleteForm-<%= booking.id %>').submit();
-                            })"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                  <% }) %>
-                </tbody>
-              </table>
+            <!-- Bookings Table -->
+            <div class="card mb-4">
+              <div class="card-header">
+                <i class="fas fa-calendar-alt me-1"></i>
+                Danh sách đặt phòng
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table class="table table-hover table-bordered">
+                    <thead>
+                      <tr>
+                        <th>ID</th>
+                        <th>Khách hàng</th>
+                        <th>Phòng</th>
+                        <th>Check-in</th>
+                        <th>Check-out</th>
+                        <th>Số khách</th>
+                        <th>Tổng tiền</th>
+                        <th>Trạng thái</th>
+                        <th>Thanh toán</th>
+                        <th>Thao tác</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <% if (bookings && bookings.length > 0) { %> <%
+                      bookings.forEach(function(booking) { %>
+                      <tr>
+                        <td>#<%= booking.id %></td>
+                        <td>
+                          <%= booking.user.fullName %><br />
+                          <small class="text-muted"
+                            ><%= booking.user.phone %></small
+                          >
+                        </td>
+                        <td>
+                          <% if (booking.roomBookings &&
+                          booking.roomBookings.length > 0) { %> <%
+                          booking.roomBookings.forEach(function(rb) { %>
+                          <div><%= rb.room.name %></div>
+                          <% }); %> <% } %>
+                        </td>
+                        <td>
+                          <%= new
+                          Date(booking.checkInDate).toLocaleDateString('vi-VN')
+                          %>
+                        </td>
+                        <td>
+                          <%= new
+                          Date(booking.checkOutDate).toLocaleDateString('vi-VN')
+                          %>
+                        </td>
+                        <td><%= booking.guestCount %></td>
+                        <td>
+                          <strong
+                            ><%= booking.totalPrice.toLocaleString('vi-VN')
+                            %>đ</strong
+                          >
+                        </td>
+                        <td>
+                          <% if (booking.status === 'PENDING') { %>
+                          <span class="badge bg-warning">Chờ xác nhận</span>
+                          <% } else if (booking.status === 'CONFIRMED') { %>
+                          <span class="badge bg-success">Đã xác nhận</span>
+                          <% } else if (booking.status === 'CHECKED_IN') { %>
+                          <span class="badge bg-info">Đang ở</span>
+                          <% } else if (booking.status === 'CHECKED_OUT') { %>
+                          <span class="badge bg-secondary">Đã trả phòng</span>
+                          <% } else if (booking.status === 'CANCELLED') { %>
+                          <span class="badge bg-danger">Đã hủy</span>
+                          <% } %>
+                        </td>
+                        <td>
+                          <% if (booking.payment) { %> <% if
+                          (booking.payment.paymentStatus === 'SUCCESS') { %>
+                          <span class="badge bg-success">Đã thanh toán</span>
+                          <% } else if (booking.payment.paymentStatus ===
+                          'PENDING') { %>
+                          <span class="badge bg-warning">Chờ thanh toán</span>
+                          <% } else if (booking.payment.paymentStatus ===
+                          'FAILED') { %>
+                          <span class="badge bg-danger">Thất bại</span>
+                          <% } else if (booking.payment.paymentStatus ===
+                          'REFUNDED') { %>
+                          <span class="badge bg-secondary">Đã hoàn</span>
+                          <% } %> <% } else { %>
+                          <span class="badge bg-secondary">Chưa có</span>
+                          <% } %>
+                        </td>
+                        <td>
+                          <div class="btn-group" role="group">
+                            <a
+                              href="/admin/booking/detail/<%= booking.id %>"
+                              class="btn btn-sm btn-info"
+                              title="Xem chi tiết"
+                            >
+                              <i class="fas fa-eye"></i>
+                            </a>
+                            <% if (booking.payment) { %>
+                            <a
+                              href="/admin/payment/detail/<%= booking.payment.id %>"
+                              class="btn btn-sm btn-primary"
+                              title="Xem thanh toán"
+                            >
+                              <i class="fas fa-dollar-sign"></i>
+                            </a>
+                            <% } %>
+                          </div>
+                        </td>
+                      </tr>
+                      <% }); %> <% } else { %>
+                      <tr>
+                        <td colspan="10" class="text-center">
+                          Không có dữ liệu
+                        </td>
+                      </tr>
+                      <% } %>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </div>
           </div>
         </main>
@@ -124,6 +204,5 @@
       crossorigin="anonymous"
     ></script>
     <script src="/admin/js/scripts.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   </body>
 </html>
