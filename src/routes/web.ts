@@ -6,7 +6,6 @@ import fileUploadMiddleware from "../middleware/multer";
 // Import Admin Controllers
 import {
     getDashboardPage,
-    getAdminBookingPage,
     getAdminPaymentPage,
     getAdminRoomPage,
     getAdminUserPage
@@ -39,6 +38,7 @@ import {
 
 // Import Middleware
 import { isLogin, isAuthenticated, isAdmin } from "../middleware/auth";
+import { getAdminBookingPage, getCreateBookingPage, getViewBookingPage, postCreateBooking, postDeleteBooking, postUpdateBooking } from "controllers/admin/booking.controller";
 
 const router = express.Router();
 
@@ -93,13 +93,19 @@ const webRoutes = (app: Express) => {
     // ===== ROOM MANAGEMENT =====
     router.get("/admin/room", isAuthenticated, isAdmin, getAdminRoomPage);
     router.get("/admin/create-room", isAuthenticated, isAdmin, getCreateRoomPage);
-    router.post("/admin/handle-create-room", isAuthenticated, isAdmin, fileUploadMiddleware("image"), postCreateRoom);
+    router.post("/admin/handle-create-room", isAuthenticated, isAdmin, fileUploadMiddleware("image","images/product"), postCreateRoom);
     router.get("/admin/view-room/:id", isAuthenticated, isAdmin, getViewRoom);
-    router.post("/admin/update-room", isAuthenticated, isAdmin, fileUploadMiddleware("image"), postUpdateRoom);
+    router.post("/admin/update-room", isAuthenticated, isAdmin, fileUploadMiddleware("image", "images/product"), postUpdateRoom);
     router.post("/admin/delete-room/:id", isAuthenticated, isAdmin, postDeleteRoom);
 
     // ===== BOOKING MANAGEMENT =====
-    router.get("/admin/booking", isAuthenticated, isAdmin, getAdminBookingPage);
+
+    router.get("/admin/booking", isAuthenticated , isAdmin ,  getAdminBookingPage);
+    router.get("/admin/create-booking", isAdmin, getCreateBookingPage);
+    router.post("/admin/handle-create-booking", isAdmin, postCreateBooking);
+    router.get("/admin/view-booking/:id", isAdmin, getViewBookingPage);
+    router.post("/admin/update-booking", isAdmin, postUpdateBooking);
+    router.post("/admin/delete-booking/:id", isAdmin, postDeleteBooking);
 
     // ===== PAYMENT MANAGEMENT =====
     router.get("/admin/payment", isAuthenticated, isAdmin, getAdminPaymentPage);

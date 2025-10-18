@@ -52,7 +52,7 @@ const configPassportLocal = () => {
             console.log(">>> deserializeUser - id:", id);
             const userInDB = await getUserWithRoleById(id);
             console.log(">>> User deserialized:", userInDB ? "YES" : "NO");
-            callback(null, userInDB);
+            callback(null, {...userInDB});
         } catch (error) {
             console.error(">>> Deserialize error:", error);
             callback(error);

@@ -25,16 +25,11 @@ const getAdminRoomPage = async (req: Request, res: Response) => {
     });
 }
 
-const getAdminBookingPage = async (req: Request, res: Response) => {
-
-    return res.render("admin/booking/show.ejs");
-}
 const getAdminPaymentPage = async (req: Request, res: Response) => {
 
     return res.render("admin/payment/show.ejs");
 }
 
 export {
-    getDashboardPage, getAdminUserPage, getAdminRoomPage,
-    getAdminBookingPage , getAdminPaymentPage
+    getDashboardPage, getAdminUserPage, getAdminRoomPage,  getAdminPaymentPage
 }
