@@ -1,10 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
 import { NextFunction, Request, Response } from "express";
 
-const getRoomsPage = async (req : Request , res : Response) => {
-    res.render("client/room/show.ejs")
+const getTeamPage = async (req : Request , res : Response) => {
+    res.render("client/team/show.ejs")
 }
 
 export {
-    getRoomsPage
+    getTeamPage
 }

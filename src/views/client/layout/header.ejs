@@ -36,7 +36,6 @@
     />
 
     <link href="/client/css/bootstrap.min.css" rel="stylesheet" />
-
     <link href="/client/css/style.css" rel="stylesheet" />
 
     <style>
@@ -50,19 +49,16 @@
         border-radius: 50%;
         object-fit: cover;
       }
-      /* CSS để bật dropdown khi HOVER */
       @media (min-width: 992px) {
         .dropdown:hover .dropdown-menu {
           display: block;
           margin-top: 0;
         }
-        /* Đảm bảo khối menu chiếm đủ không gian để căn đều */
         .navbar-nav.justify-content-around {
-          flex-grow: 1; /* Cho phép khối menu co giãn */
+          flex-grow: 1;
         }
         .navbar-dark .navbar-nav .nav-link {
-          font-size: 1.1rem; /* Bạn có thể điều chỉnh giá trị này, ví dụ: 18px, 1.2rem,... */
-          /* font-weight: 500; */ /* Tùy chọn: Điều chỉnh độ đậm nếu cần */
+          font-size: 1.1rem;
         }
       }
     </style>
@@ -70,6 +66,7 @@
 
   <body>
     <div class="container-xxl bg-white p-0">
+      <!-- Spinner Start -->
       <div
         id="spinner"
         class="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center"
@@ -82,6 +79,9 @@
           <span class="sr-only">Đang tải...</span>
         </div>
       </div>
+      <!-- Spinner End -->
+
+      <!-- Header Start -->
       <div class="container-fluid bg-dark px-0">
         <div class="row gx-0">
           <div class="col-lg-3 bg-dark d-none d-lg-block">
@@ -92,127 +92,140 @@
               <h1 class="m-0 text-primary text-uppercase">Hotelier</h1>
             </a>
           </div>
-         
+
           <div class="col-lg-9">
+            <!-- Top Bar -->
             <% if (typeof user !== 'undefined' && user) { %>
             <div class="row gx-0 bg-white d-none d-lg-flex">
               <div class="col-lg-7 px-5 text-start">
                 <div class="h-100 d-inline-flex align-items-center py-2 me-4">
-                  <i class=" fa fa-user text-primary me-2"></i>
+                  <i class="fa fa-user text-primary me-2"></i>
                   <p class="mb-0"><%= user.fullName %></p>
                 </div>
                 <div class="h-100 d-inline-flex align-items-center py-2">
                   <i class="fa fa-envelope text-primary me-2"></i>
-                  <p class="mb-0"><%=user.username %></p>
+                  <p class="mb-0"><%= user.username %></p>
                 </div>
               </div>
               <% } else { %>
               <div class="row gx-0 bg-white d-none d-lg-flex">
-              <div class="col-lg-7 px-5 text-start">
-                <div class="h-100 d-inline-flex align-items-center py-2 me-4">
-                  <i class="fa fa-envelope text-primary me-2"></i>
-                  <p class="mb-0"></p>
+                <div class="col-lg-7 px-5 text-start">
+                  <div class="h-100 d-inline-flex align-items-center py-2 me-4">
+                    <i class="fa fa-envelope text-primary me-2"></i>
+                    <p class="mb-0"></p>
+                  </div>
+                  <div class="h-100 d-inline-flex align-items-center py-2">
+                    <i class="fa fa-phone-alt text-primary me-2"></i>
+                    <p class="mb-0"></p>
+                  </div>
                 </div>
-                <div class="h-100 d-inline-flex align-items-center py-2">
-                  <i class="fa fa-phone-alt text-primary me-2"></i>
-                  <p class="mb-0"></p>
+                <% } %>
+                <div class="col-lg-5 px-5 text-end">
+                  <div class="d-inline-flex align-items-center py-2">
+                    <a class="me-3" href=""
+                      ><i class="fab fa-facebook-f"></i
+                    ></a>
+                    <a class="me-3" href=""><i class="fab fa-twitter"></i></a>
+                    <a class="me-3" href=""
+                      ><i class="fab fa-linkedin-in"></i
+                    ></a>
+                    <a class="me-3" href=""><i class="fab fa-instagram"></i></a>
+                    <a class="" href=""><i class="fab fa-youtube"></i></a>
+                  </div>
                 </div>
               </div>
-                 <% } %>
-              <div class="col-lg-5 px-5 text-end">
-                <div class="d-inline-flex align-items-center py-2">
-                  <a class="me-3" href=""><i class="fab fa-facebook-f"></i></a>
-                  <a class="me-3" href=""><i class="fab fa-twitter"></i></a>
-                  <a class="me-3" href=""><i class="fab fa-linkedin-in"></i></a>
-                  <a class="me-3" href=""><i class="fab fa-instagram"></i></a>
-                  <a class="" href=""><i class="fab fa-youtube"></i></a>
-                </div>
-              </div>
-            </div>
 
-            <nav
-              class="navbar navbar-expand-lg bg-dark navbar-dark p-3 px-lg-5"
-            >
-              <a href="/" class="navbar-brand d-block d-lg-none">
-                <h1 class="m-0 text-primary text-uppercase">Hotelier</h1>
-              </a>
-              <button
-                type="button"
-                class="navbar-toggler"
-                data-bs-toggle="collapse"
-                data-bs-target="#navbarCollapse"
+              <!-- Navbar -->
+              <nav
+                class="navbar navbar-expand-lg bg-dark navbar-dark p-3 px-lg-5"
               >
-                <span class="navbar-toggler-icon"></span>
-              </button>
+                <a href="/" class="navbar-brand d-block d-lg-none">
+                  <h1 class="m-0 text-primary text-uppercase">Hotelier</h1>
+                </a>
+                <button
+                  type="button"
+                  class="navbar-toggler"
+                  data-bs-toggle="collapse"
+                  data-bs-target="#navbarCollapse"
+                >
+                  <span class="navbar-toggler-icon"></span>
+                </button>
 
-              <div
-                class="collapse navbar-collapse justify-content-between"
-                id="navbarCollapse"
-              >
-                <div class="navbar-nav py-0 justify-content-around">
-                  <a href="/" class="nav-item nav-link">Trang Chủ</a>
-                  <a href="/about" class="nav-item nav-link">Về Chúng Tôi</a>
-                  <a href="/service" class="nav-item nav-link">Dịch Vụ</a>
-                  <a href="/room" class="nav-item nav-link">Phòng</a>
-                </div>
+                <div
+                  class="collapse navbar-collapse justify-content-between"
+                  id="navbarCollapse"
+                >
+                  <div class="navbar-nav py-0 justify-content-around">
+                    <a href="/" class="nav-item nav-link">Trang Chủ</a>
+                    <a href="/team" class="nav-item nav-link">Về Chúng Tôi</a>
+                    <a href="/service" class="nav-item nav-link">Dịch Vụ</a>
+                    <a href="/rooms" class="nav-item nav-link">Phòng</a>
+                  </div>
 
-                <div class="my-auto">
-                  <% if (typeof user !== 'undefined' && user) { %>
-                  <div class="dropdown">
-                    <a
-                      href="#"
-                      class="dropdown"
-                      role="button"
-                      id="dropdownMenuLink"
-                      data-bs-toggle="dropdown"
-                      aria-expanded="false"
-                    >
+                  <div class="my-auto">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                    <div class="dropdown">
+                      <a
+                        href="#"
+                        class="dropdown"
+                        role="button"
+                        id="dropdownMenuLink"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false"
+                      >
+                        <i class="fas fa-user fa-2x text-white"></i>
+                      </a>
+                      <ul
+                        class="dropdown-menu"
+                        aria-labelledby="dropdownMenuLink"
+                      >
+                        <li class="d-flex align-items-center flex-column">
+                          <img class="avatar-dropdown-img" src="<%= user.avatar
+                          ? '/images/' + user.avatar :
+                          '/client/img/default-avatar.png' %>" alt= />
+                          <div class="text-center my-3 fw-bold">
+                            <%= user.fullName || user.username %>
+                          </div>
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="/profile"
+                            >Quản lý tài khoản</a
+                          >
+                        </li>
+                        <li>
+                          <a class="dropdown-item" href="/booking-history"
+                            >Lịch sử đặt phòng</a
+                          >
+                        </li>
+                        <li>
+                          <hr class="dropdown-divider" />
+                        </li>
+                        <li>
+                          <form method="post" action="/logout">
+                            <button
+                              class="dropdown-item text-danger"
+                              type="submit"
+                            >
+                              Đăng xuất
+                            </button>
+                          </form>
+                        </li>
+                      </ul>
+                    </div>
+                    <% } else { %>
+                    <a href="/login" class="a-login">
                       <i class="fas fa-user fa-2x text-white"></i>
                     </a>
-                    <ul
-                      class="dropdown-menu"
-                      aria-labelledby="dropdownMenuLink"
-                    >
-                      <li class="d-flex align-items-center flex-column">
-                        <img
-                          class="avatar-dropdown-img"
-                          src="<%= user.avatar ? '/images/' + user.avatar : '/client/img/default-avatar.png' %>"
-                          alt=""
-                        />
-                        <div class="text-center my-3 fw-bold">
-                          <%= user.fullName || user.username %>
-                        </div>
-                      </li>
-                      <li>
-                        <a class="dropdown-item" href="/profile"
-                          >Quản lý tài khoản</a
-                        >
-                      </li>
-                      <li>
-                        <a class="dropdown-item" href="#">Lịch sử đặt phòng</a>
-                      </li>
-                      <li>
-                        <hr class="dropdown-divider" />
-                      </li>
-                      <li>
-                        <form method="post" action="/logout">
-                          <button class="dropdown-item text-danger">
-                            Đăng xuất
-                          </button>
-                        </form>
-                      </li>
-                    </ul>
+                    <% } %>
                   </div>
-                  <% } else { %>
-                  <a href="/login" class="a-login">
-                    <i class="fas fa-user fa-2x text-white"></i>
-                  </a>
-                  <% } %>
                 </div>
-              </div>
-            </nav>
+              </nav>
+            </div>
           </div>
         </div>
+        <!-- Header End -->
+
+        <!-- Content will be inserted here by other pages -->
       </div>
     </div>
   </body>

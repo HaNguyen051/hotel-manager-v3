@@ -1,4 +1,6 @@
 <%- include('../layout/header'); -%>
+
+<!-- banner -->
 <div class="container-fluid p-0 mb-5">
   <div id="header-carousel" class="carousel slide" data-bs-ride="carousel">
     <div class="carousel-inner">
@@ -17,12 +19,12 @@
               Khám Phá Khách Sạn Sang Trọng Đẳng Cấp
             </h1>
             <a
-              href=""
+              href="/rooms"
               class="btn btn-primary py-md-3 px-md-5 me-3 animated slideInLeft"
               >Phòng Của Chúng Tôi</a
             >
             <a
-              href=""
+              href="/booking"
               class="btn btn-light py-md-3 px-md-5 animated slideInRight"
               >Đặt Phòng</a
             >
@@ -77,6 +79,8 @@
     </button>
   </div>
 </div>
+
+<!-- search -->
 <div class="container-fluid booking pb-5 wow fadeIn" data-wow-delay="0.1s">
   <div class="container">
     <div class="bg-white shadow" style="padding: 35px">
@@ -107,18 +111,19 @@
             </div>
             <div class="col-md-3">
               <select class="form-select">
-                <option selected>Người Lớn</option>
-                <option value="1">1 Người Lớn</option>
-                <option value="2">2 Người Lớn</option>
-                <option value="3">3 Người Lớn</option>
+                <option selected>Loại phòng</option>
+                <option value="Single">Single</option>
+                <option value="Double">Double</option>
+                <option value="Suite">Suite</option>
+                <option value="Deluxe">Deluxe</option>
               </select>
             </div>
             <div class="col-md-3">
               <select class="form-select">
-                <option selected>Trẻ Em</option>
-                <option value="1">1 Trẻ Em</option>
-                <option value="2">2 Trẻ Em</option>
-                <option value="3">3 Trẻ Em</option>
+                <option selected>Số người</option>
+                <option value="1">1 người</option>
+                <option value="2">2 người</option>
+                <option value="3">3 người</option>
               </select>
             </div>
           </div>
@@ -130,6 +135,7 @@
     </div>
   </div>
 </div>
+<!-- banner -->
 <div class="container-xxl py-5">
   <div class="container">
     <div class="row g-5 align-items-center">
@@ -175,7 +181,9 @@
             </div>
           </div>
         </div>
-        <a class="btn btn-primary py-3 px-5 mt-2" href="">Khám Phá Thêm</a>
+        <a class="btn btn-primary py-3 px-5 mt-2" href="/rooms"
+          >Khám Phá Thêm</a
+        >
       </div>
       <div class="col-lg-6">
         <div class="row g-3">
@@ -213,6 +221,8 @@
     </div>
   </div>
 </div>
+
+<!-- type room -->
 <div class="container-xxl py-5">
   <div class="container">
     <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
@@ -359,6 +369,8 @@
     </div>
   </div>
 </div>
+
+<!-- banner vido + dat phong -->
 <div class="container-xxl py-5 px-0 wow zoomIn" data-wow-delay="0.1s">
   <div class="row g-0">
     <div class="col-md-6 bg-dark d-flex align-items-center">
@@ -373,10 +385,10 @@
           ratione ea, illo iure fugiat provident ipsam dicta, omnis ducimus.
           Eveniet.
         </p>
-        <a href="" class="btn btn-primary py-md-3 px-md-5 me-3"
+        <a href="/rooms" class="btn btn-primary py-md-3 px-md-5 me-3"
           >Phòng Của Chúng Tôi</a
         >
-        <a href="" class="btn btn-light py-md-3 px-md-5">Đặt Phòng</a>
+        <a href="/booking" class="btn btn-light py-md-3 px-md-5">Đặt Phòng</a>
       </div>
     </div>
     <div class="col-md-6">
@@ -395,6 +407,7 @@
   </div>
 </div>
 
+<!-- video -->
 <div
   class="modal fade"
   id="videoModal"
@@ -428,6 +441,8 @@
     </div>
   </div>
 </div>
+
+<!-- service -->
 <div class="container-xxl py-5">
   <div class="container">
     <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
@@ -538,6 +553,7 @@
     </div>
   </div>
 </div>
+<!-- member -->
 <div class="container-xxl py-5" style="margin-bottom: 200px">
   <div class="container">
     <div class="text-center wow fadeInUp" data-wow-delay="0.1s">
@@ -688,8 +704,8 @@
             </div>
           </div>
           <div class="text-center p-4 mt-3">
-            <h5 class="fw-bold mb-0">Admin</h5>
-            <small>Quản lý</small>
+            <h5 class="fw-bold mb-0">Chat GPT</h5>
+            <small>Dev main</small>
           </div>
         </div>
       </div>
