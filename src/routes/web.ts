@@ -84,11 +84,11 @@ const webRoutes = (app: Express) => {
 
     // ===== BOOKING MANAGEMENT (SỬA: Thêm isAuthenticated cho nhất quán) =====
    router.get("/admin/booking", isAuthenticated, isAdmin, getAdminBookingPage);
-    router.get("/admin/booking/create", isAuthenticated, isAdmin, getCreateBookingPage);
-    router.post("/admin/booking/handle-create", isAuthenticated, isAdmin, postCreateBooking);
-    router.get("/admin/booking/detail/:id", isAuthenticated, isAdmin, getViewBookingPage);
-    router.post("/admin/booking/update", isAuthenticated, isAdmin, postUpdateBooking);
-    router.post("/admin/booking/delete/:id", isAuthenticated, isAdmin, postDeleteBooking);
+router.get("/admin/booking/create", isAuthenticated, isAdmin, getCreateBookingPage);
+router.post("/admin/booking/create", isAuthenticated, isAdmin, postCreateBooking);  // ✅ SỬA: /handle-create → /create
+router.get("/admin/booking/detail/:id", isAuthenticated, isAdmin, getViewBookingPage);
+router.post("/admin/booking/update", isAuthenticated, isAdmin, postUpdateBooking);
+router.post("/admin/booking/delete/:id", isAuthenticated, isAdmin, postDeleteBooking);
 
     // // ===== PAYMENT MANAGEMENT =====
     // router.get("/admin/payment", isAuthenticated, isAdmin, getAdminPaymentPage);

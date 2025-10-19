@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-    <title>Booking Detail - Hotel Manager</title>
+    <title>Chi tiết Booking #<%= booking ? booking.id : 'N/A' %> - Hotel Manager</title>
     <link href="/admin/css/styles.css" rel="stylesheet" />
     <script src="https://use.fontawesome.com/releases/v6.3.0/js/all.js" crossorigin="anonymous"></script>
 </head>
@@ -17,126 +17,243 @@
         <div id="layoutSidenav_content">
             <main>
                 <div class="container-fluid px-4">
-                    <h1 class="mt-4">Booking Detail</h1>
+                    <h1 class="mt-4">Chi tiết Đặt phòng #<%= booking ? booking.id : 'N/A' %></h1>
                     <ol class="breadcrumb mb-4">
                         <li class="breadcrumb-item"><a href="/admin">Dashboard</a></li>
-                        <li class="breadcrumb-item active"><a href="/admin/booking">Bookings</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/booking">Đặt phòng</a></li>
+                        <li class="breadcrumb-item active">Chi tiết</li>
                     </ol>
-                    <div class="row">
-                        <div class="col-8 mx-auto">
-                            <% if (typeof error !== 'undefined') { %>
-                                <div class="alert alert-danger"><%= error %></div>
-                            <% } %>
 
-                            <!-- Booking Info Section -->
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h5>Booking Information</h5>
+                    <% if (typeof error_msg !== 'undefined' && error_msg && error_msg.length > 0) { %>
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <%- error_msg[0] %>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    <% } %>
+
+                    <% if (booking) { %>
+
+                    <form action="/admin/booking/update" method="POST" name="updateForm">
+                        <input type="hidden" name="id" value="<%= booking.id %>" />
+
+                        <div class="row">
+                            <!-- Left Column -->
+                            <div class="col-lg-7">
+                                <!-- Booking Info Card -->
+                                <div class="card mb-4 shadow-sm">
+                                    <div class="card-header">
+                                        <h5 class="my-1"><i class="fas fa-info-circle me-2"></i>Thông tin Booking</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-sm-6">
+                                                <strong>ID:</strong> #<%= booking.id %>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <strong>Ngày tạo:</strong> <%= new Date(booking.createdAt).toLocaleString('vi-VN') %>
+                                            </div>
+                                        </div>
+
+                                        <div class="row mb-3">
+                                            <div class="col-sm-6">
+                                                <label for="status" class="form-label fw-bold">Trạng thái:</label>
+                                                <select name="status" id="status" class="form-select form-select-sm">
+                                                    <% if (bookingStatuses) { %>
+                                                        <% bookingStatuses.forEach(s => { %>
+                                                            <option value="<%= s %>" <%= booking.status === s ? 'selected' : '' %>>
+                                                                <%= s %>
+                                                            </option>
+                                                        <% }) %>
+                                                    <% } %>
+                                                </select>
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label for="totalPrice" class="form-label fw-bold">Tổng tiền:</label>
+                                                <input type="text" id="totalPrice" class="form-control form-control-sm" 
+                                                    value="<%= booking.totalPrice ? booking.totalPrice.toLocaleString('vi-VN') + 'đ' : 'N/A' %>" 
+                                                    readonly />
+                                            </div>
+                                        </div>
+
+                                        <div class="row">
+                                            <div class="col-sm-6 mb-3">
+                                                <label for="checkInDate" class="form-label fw-bold">Ngày nhận phòng:</label>
+                                                <input type="datetime-local" id="checkInDate" name="checkInDate" 
+                                                    class="form-control form-control-sm" 
+                                                    value="<%= booking.checkInDate ? booking.checkInDate.toISOString().slice(0, 16) : '' %>" />
+                                            </div>
+                                            <div class="col-sm-6 mb-3">
+                                                <label for="checkOutDate" class="form-label fw-bold">Ngày trả phòng:</label>
+                                                <input type="datetime-local" id="checkOutDate" name="checkOutDate" 
+                                                    class="form-control form-control-sm" 
+                                                    value="<%= booking.checkOutDate ? booking.checkOutDate.toISOString().slice(0, 16) : '' %>" />
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-6">
-                                            <p><strong>Booking ID:</strong> <%= booking.id %></p>
-                                            <p><strong>Status:</strong> 
-                                                <span class="badge <%= booking.status === 'PENDING' ? 'bg-warning' : booking.status === 'CONFIRMED' ? 'bg-info' : 'bg-success' %>">
-                                                    <%= booking.status %>
-                                                </span>
-                                            </p>
-                                            <p><strong>Total Price:</strong> <%= booking.totalPrice.toLocaleString() %> VND</p>
+
+                                <!-- Guest Info Card -->
+                                <div class="card mb-4 shadow-sm">
+                                    <div class="card-header">
+                                        <h5 class="my-1"><i class="fas fa-user me-2"></i>Thông tin Khách</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="row mb-3">
+                                            <div class="col-sm-6">
+                                                <label for="guestName" class="form-label">Tên khách:</label>
+                                                <input type="text" id="guestName" name="guestName" 
+                                                    class="form-control form-control-sm" 
+                                                    value="<%= booking.guestName || '' %>" />
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label for="guestPhone" class="form-label">Điện thoại:</label>
+                                                <input type="tel" id="guestPhone" name="guestPhone" 
+                                                    class="form-control form-control-sm" 
+                                                    value="<%= booking.guestPhone || '' %>" />
+                                            </div>
                                         </div>
-                                        <div class="col-6">
-                                            <p><strong>Check In:</strong> <%= new Date(booking.checkInDate).toLocaleString('vi-VN') %></p>
-                                            <p><strong>Check Out:</strong> <%= new Date(booking.checkOutDate).toLocaleString('vi-VN') %></p>
-                                            <p><strong>Created:</strong> <%= new Date(booking.createdAt).toLocaleString('vi-VN') %></p>
+
+                                        <div class="row mb-3">
+                                            <div class="col-sm-6">
+                                                <label for="guestEmail" class="form-label">Email:</label>
+                                                <input type="email" id="guestEmail" name="guestEmail" 
+                                                    class="form-control form-control-sm" 
+                                                    value="<%= booking.guestEmail || '' %>" />
+                                            </div>
+                                            <div class="col-sm-6">
+                                                <label for="guestCount" class="form-label">Số người:</label>
+                                                <input type="number" id="guestCount" name="guestCount" 
+                                                    class="form-control form-control-sm" 
+                                                    value="<%= booking.guestCount || 1 %>" min="1" />
+                                            </div>
                                         </div>
+
+                                        <div class="mb-3">
+                                            <label for="specialRequest" class="form-label">Yêu cầu đặc biệt:</label>
+                                            <textarea id="specialRequest" name="specialRequest" 
+                                                class="form-control form-control-sm" rows="2"><%= booking.specialRequest || '' %></textarea>
+                                        </div>
+
+                                        <% if (booking.user) { %>
+                                            <p class="mb-0 text-muted small">User: <%= booking.user.username %></p>
+                                        <% } %>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Guest Info Section -->
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h5>Guest Information</h5>
-                                </div>
-                                <div class="card-body">
-                                    <p><strong>Name:</strong> <%= booking.guestName %></p>
-                                    <p><strong>Phone:</strong> <%= booking.guestPhone %></p>
-                                    <p><strong>Email:</strong> <%= booking.guestEmail || 'N/A' %></p>
-                                    <p><strong>Guest Count:</strong> <%= booking.guestCount %></p>
-                                    <p><strong>Special Request:</strong> <%= booking.specialRequest || 'None' %></p>
-                                </div>
-                            </div>
-
-                            <!-- Room Info Section -->
-                            <div class="card mb-4">
-                                <div class="card-header">
-                                    <h5>Room Information</h5>
-                                </div>
-                                <div class="card-body">
-                                    <% if (booking.roomBookings && booking.roomBookings.length > 0) { %>
-                                        <% booking.roomBookings.forEach(rb => { %>
-                                            <div>
-                                                <div class="row">
-                                                    <div class="col-6">
-                                                        <p><strong>Room Name:</strong> <%= rb.room.name %></p>
-                                                        <p><strong>Room Type:</strong> <%= rb.room.type %></p>
-                                                        <p><strong>Capacity:</strong> <%= rb.room.capacity %> persons</p>
-                                                        <p><strong>Price/Night:</strong> <%= rb.room.price.toLocaleString() %> VND</p>
-                                                        <p><strong>Number of Nights:</strong> <%= rb.quantity %></p>
-                                                        <% if (rb.room.description) { %>
-                                                            <p><strong>Description:</strong> <%= rb.room.description %></p>
-                                                        <% } %>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <% if (rb.room.image) { %>
-                                                            <img src="/client/images/<%= rb.room.image %>" alt="<%= rb.room.name %>" style="max-height: 250px; width: 100%; object-fit: cover; border-radius: 5px;" />
-                                                        <% } else { %>
-                                                            <div style="max-height: 250px; width: 100%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; border-radius: 5px;">
-                                                                <p style="color: #999;">No image available</p>
-                                                            </div>
-                                                        <% } %>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        <% }) %>
-                                    <% } %>
-                                </div>
-                            </div>
-
-                            <!-- Update Status Section -->
-                            <div class="card">
-                                <div class="card-header">
-                                    <h5>Update Booking</h5>
-                                </div>
-                                <div class="card-body">
-                                    <form action="/admin/update-booking" method="post">
-                                        <input type="hidden" name="id" value="<%= booking.id %>" />
-                                        
+                            <!-- Right Column -->
+                            <div class="col-lg-5">
+                                <!-- Room Info Card -->
+                                <div class="card mb-4 shadow-sm">
+                                    <div class="card-header">
+                                        <h5 class="my-1"><i class="fas fa-bed me-2"></i>Thông tin Phòng</h5>
+                                    </div>
+                                    <div class="card-body">
                                         <div class="mb-3">
-                                            <label class="form-label">Status</label>
-                                            <select name="status" class="form-select">
-                                                <option value="PENDING" <%= booking.status === 'PENDING' ? 'selected' : '' %>>PENDING</option>
-                                                <option value="CONFIRMED" <%= booking.status === 'CONFIRMED' ? 'selected' : '' %>>CONFIRMED</option>
-                                                <option value="CHECKED_IN" <%= booking.status === 'CHECKED_IN' ? 'selected' : '' %>>CHECKED_IN</option>
-                                                <option value="CHECKED_OUT" <%= booking.status === 'CHECKED_OUT' ? 'selected' : '' %>>CHECKED_OUT</option>
-                                                <option value="CANCELLED" <%= booking.status === 'CANCELLED' ? 'selected' : '' %>>CANCELLED</option>
+                                            <label for="roomId" class="form-label">Chọn Phòng:</label>
+                                            <select name="roomId" id="roomId" class="form-select form-select-sm">
+                                                <option value="">-- Giữ nguyên --</option>
+                                                <% if (rooms && rooms.length > 0) { %>
+                                                    <% rooms.forEach(room => { %>
+                                                        <option value="<%= room.id %>">
+                                                            <%= room.name %> - <%= room.type %> (<%= room.capacity %> người) - <%= room.price.toLocaleString('vi-VN') %>đ/đêm
+                                                        </option>
+                                                    <% }) %>
+                                                <% } %>
                                             </select>
                                         </div>
 
-                                        <div class="mb-3">
-                                            <button type="submit" class="btn btn-warning">Update Booking</button>
-                                        </div>
+                                        <% if (booking.roomBookings && booking.roomBookings[0] && booking.roomBookings[0].room) { %>
+                                            <% const room = booking.roomBookings[0].room; %>
+                                            <% if (room.image) { %>
+                                                <img src="/images/product/<%= room.image %>" alt="<%= room.name %>" 
+                                                    class="img-fluid rounded mb-2" style="max-height: 180px; width: 100%; object-fit: cover;" />
+                                            <% } %>
+                                            <p class="mb-1"><small><strong>Phòng hiện tại:</strong> <%= room.name %></small></p>
+                                            <p class="mb-1"><small><strong>Giá/đêm:</strong> <%= booking.roomBookings[0].price ? booking.roomBookings[0].price.toLocaleString('vi-VN') + 'đ' : 'N/A' %></small></p>
+                                            <p class="mb-0"><small><strong>Số đêm:</strong> <%= booking.roomBookings[0].quantity || 'N/A' %></small></p>
+                                        <% } %>
+                                    </div>
+                                </div>
+
+                                <!-- Payment Info Card -->
+                                <div class="card mb-4 shadow-sm">
+                                    <div class="card-header">
+                                        <h5 class="my-1"><i class="fas fa-credit-card me-2"></i>Thanh Toán</h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <% if (booking.payment) { %>
+                                            <p class="mb-1"><small><strong>ID:</strong> #<%= booking.payment.id %></small></p>
+                                            <p class="mb-1"><small><strong>Trạng thái:</strong> <%= booking.payment.paymentStatus %></small></p>
+                                            <p class="mb-1"><small><strong>Phương thức:</strong> <%= booking.payment.paymentMethod %></small></p>
+                                            <p class="mb-0"><small><strong>Số tiền:</strong> <%= booking.payment.totalAmount ? booking.payment.totalAmount.toLocaleString('vi-VN') + 'đ' : 'N/A' %></small></p>
+                                        <% } else { %>
+                                            <p class="text-muted text-center py-3">Chưa có thông tin thanh toán</p>
+                                        <% } %>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="mt-4 d-flex justify-content-between">
+                            <a href="/admin/booking" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-1"></i> Quay lại
+                            </a>
+                            <div>
+                                <% if (booking.status === 'PENDING' || booking.status === 'CANCELLED') { %>
+                                    <button type="button" class="btn btn-danger me-2" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                                        <i class="fas fa-trash-alt me-1"></i> Xóa
+                                    </button>
+                                <% } %>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="fas fa-save me-1"></i> Lưu thay đổi
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Delete Modal -->
+                    <div class="modal fade" id="deleteModal" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white">
+                                    <h5 class="modal-title">Xác nhận xóa</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    Xóa booking #<%= booking.id %>?
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    <form action="/admin/booking/delete/<%= booking.id %>" method="POST" class="d-inline">
+                                        <button type="submit" class="btn btn-danger">Xóa</button>
                                     </form>
                                 </div>
                             </div>
                         </div>
                     </div>
+
+                    <% } else { %>
+                        <div class="alert alert-warning">Không tìm thấy booking</div>
+                        <a href="/admin/booking" class="btn btn-secondary">Quay lại</a>
+                    <% } %>
+
                 </div>
             </main>
             <%- include('../layout/footer'); -%>
         </div>
     </div>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="/admin/js/scripts.js"></script>
+    <script>
+        // Simple submit handler
+        document.getElementById('submitBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('Submit clicked');
+            document.querySelector('form[name="updateForm"]').submit();
+        });
+    </script>
 </body>
 </html>

@@ -1,3 +1,4 @@
+// ==================== src/controllers/admin/booking.controller.ts ====================
 import { Request, Response } from "express";
 import {
     getAllBookings,
@@ -6,72 +7,113 @@ import {
     updateBooking,
     deleteBooking,
     getAvailableRooms
-} from "services/admin/booking.service";
+} from "../../services/admin/booking.service";
+import { BookingStatus } from "@prisma/client";
+import { prisma } from "../../config/client";
 
-const getAdminBookingPage = async (req: Request, res: Response) => {
+interface SessionData {
+    messages?: string[];
+    error?: string;
+    oldData?: any;
+    [key: string]: any;
+}
+
+const clearSessionData = (session: SessionData) => {
+    delete session.messages;
+    delete session.error;
+    delete session.oldData;
+};
+
+// --- Hiển thị trang tạo Booking ---
+const getCreateBookingPage = async (req: Request, res: Response) => {
+    const session = (req.session as SessionData) || {};
+    const error = session.error ?? undefined;
+    const oldData = session.oldData ?? {};
+    clearSessionData(session);
+
     try {
-        const { status } = req.query;
-        const filterStatus = status || 'all';
+        const [rooms, users] = await Promise.all([
+            getAvailableRooms(),
+            prisma.user.findMany({
+                where: { role: { name: 'USER' } },
+                // FIX: Kiểm tra schema của User model, có thể không có phone
+                select: { 
+                    id: true, 
+                    fullName: true, 
+                    username: true,
+                    // phone: true  // ❌ Có thể không tồn tại, comment lại
+                    // Thay vào đó, lấy thông qua relation nếu cần
+                }
+            })
+        ]);
 
-        const bookings = await getAllBookings(filterStatus as string);
-        const { session } = req as any;
-        const messages = session?.messages ?? [];
+        console.log("[Controller] Rooms:", rooms.length);
+        console.log("[Controller] Users:", users.length);
 
-        if (session?.messages) {
-            session.messages = [];
-            session.save();
+        return res.render("admin/booking/create", {
+            rooms,
+            users,
+            error,
+            oldData,
+            user: req.user
+        });
+    } catch (error: any) {
+        console.error("[Controller] ❌ Error getting create booking page:", error.message);
+        console.error("[Stack]:", error.stack);
+        req.flash('error_msg', `Lỗi tải trang tạo booking: ${error.message}`);
+        return res.redirect("/admin/booking");
+    }
+};
+
+// --- Hiển thị trang danh sách Booking ---
+const getAdminBookingPage = async (req: Request, res: Response) => {
+    const session = (req.session as SessionData) || {};
+    const messages = session.messages ?? [];
+    clearSessionData(session);
+
+    try {
+        const statusQuery = req.query.status as string | undefined;
+        let filterStatus: BookingStatus | 'all' = 'all';
+
+        if (statusQuery && Object.values(BookingStatus).includes(statusQuery as BookingStatus)) {
+            filterStatus = statusQuery as BookingStatus;
         }
 
-        return res.render("admin/booking/show.ejs", {
+        const bookings = await getAllBookings(filterStatus !== 'all' ? filterStatus : undefined);
+
+        return res.render("admin/booking/show", {
             bookings,
             messages,
             filterStatus,
-            error: undefined
+            error: undefined,
+            user: req.user
         });
     } catch (error: any) {
-        console.error("Error:", error);
-        return res.render("admin/booking/show.ejs", {
+        console.error("[Controller] ❌ Error getting admin booking page:", error);
+        return res.render("admin/booking/show", {
             bookings: [],
             messages: [],
             filterStatus: 'all',
-            error: error.message
+            error: `Lỗi tải danh sách: ${error.message}`,
+            user: req.user
         });
     }
 };
 
-const getCreateBookingPage = async (req: Request, res: Response) => {
-    try {
-        const rooms = await getAvailableRooms();
-        return res.render("admin/booking/create.ejs", {
-            rooms,
-            error: undefined
-        });
-    } catch (error: any) {
-        return res.render("admin/booking/create.ejs", {
-            rooms: [],
-            error: error.message
-        });
-    }
-};
-
+// --- Xử lý tạo Booking ---
 const postCreateBooking = async (req: Request, res: Response) => {
     const {
-        guestName,
-        guestPhone,
-        guestEmail,
-        guestCount,
-        roomId,
-        checkInDate,
-        checkOutDate,
-        specialRequest,
-        userId
+        guestName, guestPhone, guestEmail, guestCount,
+        roomId, checkInDate, checkOutDate, specialRequest, userId
     } = req.body;
-    const { session } = req as any;
 
     try {
-        if (!guestName || !guestPhone || !roomId || !checkInDate || !checkOutDate) {
-            throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc");
+        if (!guestName?.trim() || !guestPhone?.trim() || !roomId || !checkInDate || !checkOutDate || !userId) {
+            throw new Error("Vui lòng điền đầy đủ thông tin bắt buộc (*).");
         }
+
+        const parsedUserId = parseInt(userId);
+        if (isNaN(parsedUserId)) throw new Error("Người dùng không hợp lệ.");
 
         const booking = await createBooking({
             guestName: guestName.trim(),
@@ -82,117 +124,126 @@ const postCreateBooking = async (req: Request, res: Response) => {
             checkInDate: new Date(checkInDate),
             checkOutDate: new Date(checkOutDate),
             specialRequest: specialRequest?.trim() || null,
-            userId: parseInt(userId) || 1
+            userId: parsedUserId
         });
 
-        session.messages = [
-            `✅ Tạo booking thành công! Khách: ${guestName}, Tổng: ${booking.totalPrice.toLocaleString('vi-VN')}đ`
-        ];
-        session.save();
-
+        req.flash('success_msg', `✅ Tạo booking #${booking.id} thành công!`);
         return res.redirect("/admin/booking");
-    } catch (error: any) {
-        const rooms = await getAvailableRooms();
-        session.messages = [`❌ ${error.message}`];
-        session.save();
 
-        return res.render("admin/booking/create.ejs", {
-            rooms,
-            error: error.message,
-            oldData: req.body
-        });
+    } catch (error: any) {
+        console.error("[Controller] ❌ Lỗi tạo booking:", error.message);
+        const session = (req.session as SessionData) || {};
+        session.error = `❌ Lỗi tạo booking: ${error.message}`;
+        session.oldData = req.body;
+        return res.redirect("/admin/booking/create");
     }
 };
 
+// --- Hiển thị trang chi tiết/sửa Booking ---
 const getViewBookingPage = async (req: Request, res: Response) => {
     const { id } = req.params;
+    const session = (req.session as SessionData) || {};
+    const error = session.error ?? undefined;
+    clearSessionData(session);
 
     try {
-        const booking = await getBookingById(parseInt(id));
+        const bookingIdNum = parseInt(id);
+        if (isNaN(bookingIdNum)) throw new Error("ID booking không hợp lệ.");
+
+        const [booking, rooms, bookingStatuses] = await Promise.all([
+            getBookingById(bookingIdNum),
+            getAvailableRooms(),
+            Promise.resolve(Object.values(BookingStatus))
+        ]);
 
         if (!booking) {
-            return res.status(404).render("status/404.ejs", {
-                message: "Booking không tồn tại"
-            });
+            req.flash('error_msg', `Không tìm thấy booking với ID #${id}.`);
+            return res.redirect("/admin/booking");
         }
 
-        const rooms = await getAvailableRooms();
-
-        return res.render("admin/booking/detail.ejs", {
+        return res.render("admin/booking/detail", {
             booking,
             rooms,
-            error: undefined
+            bookingStatuses,
+            error,
+            user: req.user
         });
     } catch (error: any) {
-        console.error("Error:", error);
-        return res.status(400).render("status/error.ejs", {
-            message: error.message
-        });
+        console.error("[Controller] ❌ Lỗi xem chi tiết booking:", error);
+        req.flash('error_msg', `Lỗi tải chi tiết booking #${id}: ${error.message}`);
+        return res.redirect("/admin/booking");
     }
 };
 
+// --- Xử lý cập nhật Booking ---
 const postUpdateBooking = async (req: Request, res: Response) => {
+    console.log("\n========== POST /admin/booking/update ==========");
+    console.log("Request body:", req.body);
+    
     const {
-        id,
-        guestName,
-        guestPhone,
-        guestEmail,
-        guestCount,
-        roomId,
-        checkInDate,
-        checkOutDate,
-        specialRequest,
-        status
+        id, guestName, guestPhone, guestEmail, guestCount,
+        roomId, checkInDate, checkOutDate, specialRequest, status
     } = req.body;
-    const { session } = req as any;
 
     try {
-        await updateBooking(parseInt(id), {
+        // Validate ID
+        if (!id) {
+            console.log("❌ Missing ID");
+            throw new Error("Thiếu ID booking.");
+        }
+
+        const bookingIdNum = parseInt(id);
+        if (isNaN(bookingIdNum)) {
+            console.log("❌ Invalid ID:", id);
+            throw new Error("ID booking không hợp lệ.");
+        }
+
+        console.log(`✅ Updating booking #${bookingIdNum}`);
+        console.log(`   Status: ${status}`);
+        console.log(`   Guest: ${guestName}`);
+
+        // Call service
+        const result = await updateBooking(bookingIdNum, {
             guestName: guestName?.trim(),
             guestPhone: guestPhone?.trim(),
-            guestEmail: guestEmail?.trim() || null,
+            guestEmail: guestEmail === undefined ? undefined : (guestEmail?.trim() || null),
             guestCount: guestCount ? parseInt(guestCount) : undefined,
             roomId: roomId ? parseInt(roomId) : undefined,
             checkInDate: checkInDate ? new Date(checkInDate) : undefined,
             checkOutDate: checkOutDate ? new Date(checkOutDate) : undefined,
-            specialRequest: specialRequest?.trim() || null,
-            status: status as any
+            specialRequest: specialRequest === undefined ? undefined : (specialRequest?.trim() || null),
+            status: status as BookingStatus | undefined
         });
 
-        session.messages = [`✅ Cập nhật booking thành công!`];
-        session.save();
-
+        console.log("✅ Update successful");
+        req.flash('success_msg', `✅ Cập nhật booking #${id} thành công!`);
         return res.redirect("/admin/booking");
+
     } catch (error: any) {
-        const booking = await getBookingById(parseInt(id));
-        const rooms = await getAvailableRooms();
-
-        session.messages = [`❌ ${error.message}`];
-        session.save();
-
-        return res.render("admin/booking/detail.ejs", {
-            booking,
-            rooms,
-            error: error.message
-        });
+        console.error("❌ Error updating booking:", error.message);
+        console.error("Stack:", error.stack);
+        
+        const session = (req.session as SessionData) || {};
+        session.error = `❌ Lỗi: ${error.message}`;
+        return res.redirect(`/admin/booking/detail/${id}`);
     }
 };
 
+// --- Xử lý xóa Booking ---
 const postDeleteBooking = async (req: Request, res: Response) => {
     const { id } = req.params;
-    const { session } = req as any;
 
     try {
-        await deleteBooking(parseInt(id));
+        const bookingIdNum = parseInt(id);
+        if (isNaN(bookingIdNum)) throw new Error("ID booking không hợp lệ.");
 
-        session.messages = [`✅ Xóa booking #${id} thành công!`];
-        session.save();
-
+        await deleteBooking(bookingIdNum);
+        req.flash('success_msg', `✅ Xóa booking #${id} thành công!`);
         return res.redirect("/admin/booking");
-    } catch (error: any) {
-        session.messages = [`❌ ${error.message}`];
-        session.save();
 
+    } catch (error: any) {
+        console.error("[Controller] ❌ Lỗi xóa booking:", error.message);
+        req.flash('error_msg', `❌ Lỗi xóa booking #${id}: ${error.message}`);
         return res.redirect("/admin/booking");
     }
 };
