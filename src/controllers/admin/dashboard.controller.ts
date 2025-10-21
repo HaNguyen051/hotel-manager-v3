@@ -42,57 +42,9 @@ const getAdminRoomPage = async (req: Request, res: Response) => {
     }
 };
 
-const getAdminBookingPage = async (req: Request, res: Response) => {
-    try {
-        const bookings = await getAllBookings();
-        const session = req.session as any;
-        const messages = session?.messages || [];
-
-        if (session?.messages) {
-            session.messages = [];
-        }
-
-        return res.render("admin/booking/show.ejs", {
-            bookings,
-            filterStatus: 'all',
-            messages
-        });
-    } catch (error) {
-        console.error("Error getting bookings:", error);
-        return res.status(500).send("Internal Server Error");
-    }
-};
-
-const getAdminPaymentPage = async (req: Request, res: Response) => {
-    try {
-        const payments = await getAllPayments();
-        const session = req.session as any;
-        const messages = session?.messages || [];
-
-        if (session?.messages) {
-            session.messages = [];
-            session.save();
-        }
-
-        return res.render("admin/payment/show.ejs", {
-            payments,
-            messages,
-            error: undefined
-        });
-    } catch (error: any) {
-        console.error("Error:", error);
-        return res.render("admin/payment/show.ejs", {
-            payments: [],
-            messages: [],
-            error: error.message
-        });
-    }
-};
 
 export {
     getDashboardPage,
     getAdminUserPage,
     getAdminRoomPage,
-    getAdminBookingPage,
-    getAdminPaymentPage
 };

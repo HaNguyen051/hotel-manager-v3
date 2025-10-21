@@ -1,8 +1,8 @@
-// ==================== src/services/admin/booking.service.ts (REVISED LOGIC) ====================
-import { prisma } from "config/client";
-import { BookingStatus, RoomStatus, PaymentStatus, Prisma } from "@prisma/client"; // Import Enums
+// ==================== src/services/admin/booking.service.ts (COMPLETE) ====================
+import { prisma } from "../../config/client";
+import { BookingStatus, RoomStatus, Prisma } from "@prisma/client";
 
-// --- Interfaces ---
+// ==================== INTERFACES ====================
 interface CreateBookingData {
     guestName: string;
     guestPhone: string;
@@ -12,7 +12,7 @@ interface CreateBookingData {
     checkInDate: Date;
     checkOutDate: Date;
     specialRequest?: string | null;
-    userId: number; // Assuming Admin creates booking 'on behalf of' a user or a default admin user
+    userId: number;
 }
 
 interface UpdateBookingData {
@@ -20,22 +20,29 @@ interface UpdateBookingData {
     guestPhone?: string;
     guestEmail?: string | null;
     guestCount?: number;
-    roomId?: number; // Allow changing room
+    roomId?: number;
     checkInDate?: Date;
     checkOutDate?: Date;
     specialRequest?: string | null;
     status?: BookingStatus;
 }
 
-// ========== HELPERS (Revised isRoomAvailable) ==========
+// ==================== HELPER FUNCTIONS ====================
+
+/**
+ * Tính số đêm giữa 2 ngày
+ */
 const calculateNights = (checkIn: Date, checkOut: Date): number => {
     const msPerDay = 24 * 60 * 60 * 1000;
     const diffTime = Math.max(checkOut.getTime() - checkIn.getTime(), 0);
     const nights = Math.ceil(diffTime / msPerDay);
-    return nights === 0 && diffTime > 0 ? 1 : nights; // Ensure at least 1 night if checkout > checkin
+    return nights === 0 && diffTime > 0 ? 1 : nights;
 };
 
-const validateDates = (checkIn: Date, checkOut: Date, allowPast = false) => { // Allow past for admin view?
+/**
+ * Validate ngày check-in và check-out
+ */
+const validateDates = (checkIn: Date, checkOut: Date, allowPast = false) => {
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const checkInDay = new Date(checkIn.getFullYear(), checkIn.getMonth(), checkIn.getDate());
@@ -51,52 +58,113 @@ const validateDates = (checkIn: Date, checkOut: Date, allowPast = false) => { //
     if (nights > 365) throw new Error("Booking không thể vượt quá 365 đêm.");
 };
 
-// REVISED: Query directly on Booking for conflicts
+/**
+ * Kiểm tra phòng có available trong khoảng thời gian không
+ */
 const isRoomAvailable = async (
     roomId: number,
     checkIn: Date,
     checkOut: Date,
-    excludeBookingId?: number // For checking availability when updating
+    excludeBookingId?: number
 ): Promise<boolean> => {
     try {
         const conflictBooking = await prisma.booking.findFirst({
             where: {
                 roomId,
                 status: {
-                    in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] // Check against confirmed/checked-in
+                    in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN]
                 },
-                checkOutDate: { gt: checkIn }, // Existing booking ends after my start
-                checkInDate: { lt: checkOut }, // Existing booking starts before my end
-                // Exclude the booking being updated
+                checkOutDate: { gt: checkIn },
+                checkInDate: { lt: checkOut },
                 ...(excludeBookingId && { id: { not: excludeBookingId } })
             }
         });
-        return !conflictBooking; // Available if no conflict found
+        return !conflictBooking;
     } catch (error) {
         console.error("[Service] Error checking availability:", error);
         throw new Error("Lỗi khi kiểm tra tình trạng phòng.");
     }
 };
 
-// ========== CRUD OPERATIONS (Revised) ==========
+/**
+ * Tự động chuyển booking quá hạn sang CHECKED_OUT
+ */
+const autoCheckOutExpiredBookings = async (tx: any) => {
+    const now = new Date();
+    
+    const expiredBookings = await tx.booking.findMany({
+        where: {
+            status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] },
+            checkOutDate: { lt: now }
+        },
+        include: {
+            roomBookings: { select: { roomId: true } }
+        }
+    });
 
-const getAllBookings = async (statusFilter?: string) => {
+    if (expiredBookings.length === 0) return;
+
+    console.log(`[Service] 🔄 Auto checking out ${expiredBookings.length} expired bookings`);
+
+    for (const booking of expiredBookings) {
+        // Update booking status
+        await tx.booking.update({
+            where: { id: booking.id },
+            data: { status: BookingStatus.CHECKED_OUT }
+        });
+
+        console.log(`[Service] ✅ Auto checked out booking #${booking.id}`);
+
+        // Free room if no other active bookings
+        const roomId = booking.roomBookings[0]?.roomId;
+        if (roomId) {
+            const otherActiveBookings = await tx.booking.findFirst({
+                where: {
+                    roomId: roomId,
+                    id: { not: booking.id },
+                    status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] }
+                }
+            });
+
+            if (!otherActiveBookings) {
+                await tx.room.update({
+                    where: { id: roomId },
+                    data: { status: RoomStatus.AVAILABLE }
+                });
+                console.log(`[Service] ✅ Auto freed room ${roomId}`);
+            }
+        }
+    }
+};
+
+// ==================== CRUD OPERATIONS ====================
+
+/**
+ * Lấy danh sách tất cả bookings (có filter theo status)
+ */
+const getAllBookings = async (statusFilter?: BookingStatus) => {
     try {
-        let where: Prisma.BookingWhereInput = {}; // Use correct Prisma type
-        // Validate status filter
-        if (statusFilter && statusFilter !== 'all' && Object.values(BookingStatus).includes(statusFilter as BookingStatus)) {
-            where = { status: statusFilter as BookingStatus };
+        // Auto check-out expired bookings trước khi load
+        await prisma.$transaction(async (tx) => {
+            await autoCheckOutExpiredBookings(tx);
+        });
+
+        let where: Prisma.BookingWhereInput = {};
+        if (statusFilter) {
+            where = { status: statusFilter };
         }
 
         const bookings = await prisma.booking.findMany({
             where,
-            include: { // Ensure all necessary relations are included for the view
+            include: {
                 user: { select: { id: true, fullName: true, phone: true, username: true } },
-                roomBookings: { include: { room: { select: { id: true, name: true, type: true } } } }, // Include room ID here
-                payment: { select: { id: true, paymentStatus: true } } // Include payment ID
+                roomBookings: { include: { room: { select: { id: true, name: true, type: true } } } },
+                payment: { select: { id: true, paymentStatus: true } }
             },
             orderBy: { createdAt: 'desc' }
         });
+
+        console.log(`[Service] Loaded ${bookings.length} bookings${statusFilter ? ` with status ${statusFilter}` : ''}`);
         return bookings;
     } catch (error) {
         console.error("[Service] Error fetching bookings:", error);
@@ -104,17 +172,19 @@ const getAllBookings = async (statusFilter?: string) => {
     }
 };
 
+/**
+ * Lấy booking theo ID
+ */
 const getBookingById = async (id: number) => {
     try {
         const booking = await prisma.booking.findUnique({
             where: { id },
-            include: { // Include everything needed for detail view
+            include: {
                 user: { select: { id: true, fullName: true, phone: true, username: true } },
-                roomBookings: { include: { room: true } }, // Full room info for detail
-                payment: true // Full payment info
+                roomBookings: { include: { room: true } },
+                payment: true
             }
         });
-        // No need to check for existence here, controller should handle null
         return booking;
     } catch (error) {
         console.error(`[Service] Error fetching booking ${id}:`, error);
@@ -122,13 +192,15 @@ const getBookingById = async (id: number) => {
     }
 };
 
-// Get rooms suitable for Admin booking (e.g., AVAILABLE or CLEANING)
+/**
+ * Lấy danh sách phòng available cho admin
+ */
 const getRoomsForAdminBooking = async () => {
     try {
         const rooms = await prisma.room.findMany({
             where: {
                 status: {
-                    in: [RoomStatus.AVAILABLE, RoomStatus.CLEANING] // Include cleaning rooms?
+                    in: [RoomStatus.AVAILABLE, RoomStatus.CLEANING]
                 }
             },
             select: { id: true, name: true, type: true, price: true, capacity: true },
@@ -136,29 +208,37 @@ const getRoomsForAdminBooking = async () => {
         });
         return rooms;
     } catch (error) {
-        console.error("[Service] Error fetching available rooms for admin:", error);
+        console.error("[Service] Error fetching available rooms:", error);
         throw new Error("Không thể tải danh sách phòng.");
     }
 };
 
-// REVISED: Create booking and update room status
+/**
+ * Tạo booking mới
+ */
 const createBooking = async (data: CreateBookingData) => {
     return await prisma.$transaction(async (tx) => {
+        console.log(`[Service] Creating booking for room ${data.roomId}`);
+
         // Validation
         if (!data.guestName || !data.guestPhone || !data.roomId || !data.userId) {
             throw new Error("Thiếu thông tin khách hàng, phòng hoặc người dùng.");
         }
         validateDates(data.checkInDate, data.checkOutDate);
 
-        // Check room existence and capacity
+        // Check room
         const room = await tx.room.findUnique({ where: { id: data.roomId } });
         if (!room) throw new Error("Phòng không tồn tại.");
-        if (room.capacity < data.guestCount) throw new Error(`Phòng chỉ chứa tối đa ${room.capacity} người.`);
-        if (room.status === RoomStatus.MAINTENANCE) throw new Error("Phòng đang được bảo trì.");
+        if (room.capacity < data.guestCount) {
+            throw new Error(`Phòng chỉ chứa tối đa ${room.capacity} người.`);
+        }
+        if (room.status === RoomStatus.MAINTENANCE) {
+            throw new Error("Phòng đang được bảo trì.");
+        }
 
-        // Check availability within transaction
-        const isAvailable = await isRoomAvailable(data.roomId, data.checkInDate, data.checkOutDate);
-        if (!isAvailable) {
+        // Check availability
+        const available = await isRoomAvailable(data.roomId, data.checkInDate, data.checkOutDate);
+        if (!available) {
             throw new Error(`Phòng ${room.name} không còn trống trong khoảng thời gian này.`);
         }
 
@@ -167,7 +247,9 @@ const createBooking = async (data: CreateBookingData) => {
         if (nights <= 0) throw new Error("Số đêm không hợp lệ.");
         const totalPrice = room.price * nights;
 
-        // Create the booking record
+        console.log(`[Service] Creating booking: ${nights} nights x ${room.price} = ${totalPrice}`);
+
+        // Create booking
         const newBooking = await tx.booking.create({
             data: {
                 guestName: data.guestName,
@@ -178,39 +260,44 @@ const createBooking = async (data: CreateBookingData) => {
                 checkOutDate: data.checkOutDate,
                 specialRequest: data.specialRequest,
                 totalPrice,
-                status: BookingStatus.PENDING, // Default status
+                status: BookingStatus.PENDING,
                 userId: data.userId,
-                roomId: data.roomId, // Assuming direct relation is okay
-                roomBookings: { // Create the linking record
+                roomId: data.roomId,
+                roomBookings: {
                     create: {
                         roomId: data.roomId,
                         price: room.price,
                         quantity: nights
                     }
                 }
-            },
-             // Include necessary relations for the return value if needed immediately
-             // include: { user: true, roomBookings: { include: { room: true } } }
+            }
         });
 
-        // **LOGIC UPDATE**: Mark room as BOOKED since a booking (even PENDING) exists
-        // Note: This prevents double-booking while pending. Adjust if PENDING shouldn't block.
-        if (room.status !== RoomStatus.BOOKED) { // Only update if not already booked
-             await tx.room.update({
-                 where: { id: data.roomId },
-                 data: { status: RoomStatus.BOOKED }
-             });
+        // Update room status to BOOKED
+        if (room.status !== RoomStatus.BOOKED) {
+            await tx.room.update({
+                where: { id: data.roomId },
+                data: { status: RoomStatus.BOOKED }
+            });
+            console.log(`[Service] Room ${data.roomId} marked as BOOKED`);
         }
 
-        return newBooking; // Return the created booking ID/object
+        console.log(`[Service] ✅ Created booking #${newBooking.id}`);
+        return newBooking;
     });
 };
 
-
-// REVISED: Update booking with status logic and room update
+/**
+ * Cập nhật booking
+ */
 const updateBooking = async (id: number, data: UpdateBookingData) => {
     return await prisma.$transaction(async (tx) => {
-        // 1. Lấy booking hiện tại
+        console.log(`[Service] Updating booking #${id}`);
+
+        // Auto check-out expired bookings first
+        await autoCheckOutExpiredBookings(tx);
+
+        // Get current booking
         const currentBooking = await tx.booking.findUnique({
             where: { id },
             include: { roomBookings: true }
@@ -224,262 +311,237 @@ const updateBooking = async (id: number, data: UpdateBookingData) => {
         const checkIn = data.checkInDate || currentBooking.checkInDate;
         const checkOut = data.checkOutDate || currentBooking.checkOutDate;
         let requiresAvailabilityCheck = false;
-        let requiresRoomUpdate = false; // Cờ để biết có cần cập nhật trạng thái phòng hay không
+        let requiresRoomUpdate = false;
 
-        // 2. Validate Status Transition
+        // Validate Status Transition (Relaxed for admin)
         if (newStatus && newStatus !== oldStatus) {
             const validTransitions: Record<BookingStatus, BookingStatus[]> = {
                 'PENDING': [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
-                'CONFIRMED': [BookingStatus.CHECKED_IN, BookingStatus.CANCELLED],
-                'CHECKED_IN': [BookingStatus.CHECKED_OUT],
-                'CHECKED_OUT': [],
-                'CANCELLED': []
+                'CONFIRMED': [BookingStatus.CHECKED_IN, BookingStatus.CANCELLED, BookingStatus.CHECKED_OUT],
+                'CHECKED_IN': [BookingStatus.CHECKED_OUT, BookingStatus.CANCELLED],
+                'CHECKED_OUT': [BookingStatus.CONFIRMED],
+                'CANCELLED': [BookingStatus.PENDING]
             };
-            if (!validTransitions[oldStatus]?.includes(newStatus)) { // Giữ lại includes ở đây vì nó đơn giản hơn
-                throw new Error(`Không thể chuyển từ trạng thái ${oldStatus} sang ${newStatus}.`);
+            
+            if (!validTransitions[oldStatus]?.includes(newStatus)) {
+                throw new Error(`Không thể chuyển từ ${oldStatus} sang ${newStatus}.`);
             }
             requiresRoomUpdate = true;
+            console.log(`[Service] Status change: ${oldStatus} → ${newStatus}`);
         }
-        // 3. Validate Dates if changed
+
+        // Validate Dates (allow past for admin)
         if (data.checkInDate || data.checkOutDate) {
-            validateDates(checkIn, checkOut, true); // Allow past dates for viewing/editing?
-            requiresAvailabilityCheck = true; // Date change requires availability check
+            if (checkOut <= checkIn) {
+                throw new Error("Ngày trả phòng phải sau ngày nhận phòng.");
+            }
+            const nights = calculateNights(checkIn, checkOut);
+            if (nights <= 0) throw new Error("Số đêm phải lớn hơn 0.");
+            if (nights > 365) throw new Error("Booking không thể vượt quá 365 đêm.");
+            requiresAvailabilityCheck = true;
         }
 
-        // 4. Validate Room Change if changed
+        // Validate Room Change
         if (newRoomId && oldRoomId !== newRoomId) {
-             const newRoom = await tx.room.findUnique({ where: { id: newRoomId } });
-             if (!newRoom) throw new Error("Phòng mới không tồn tại.");
-             if (newRoom.status === RoomStatus.MAINTENANCE) throw new Error("Phòng mới đang bảo trì.");
-             // Check capacity if guestCount is also changing or known
-             const guestCount = data.guestCount || currentBooking.guestCount;
-             if(newRoom.capacity < guestCount) throw new Error(`Phòng mới chỉ chứa ${newRoom.capacity} người.`);
+            const newRoom = await tx.room.findUnique({ where: { id: newRoomId } });
+            if (!newRoom) throw new Error("Phòng mới không tồn tại.");
+            if (newRoom.status === RoomStatus.MAINTENANCE) {
+                throw new Error("Phòng mới đang bảo trì.");
+            }
+            
+            const guestCount = data.guestCount || currentBooking.guestCount;
+            if (newRoom.capacity < guestCount) {
+                throw new Error(`Phòng mới chỉ chứa ${newRoom.capacity} người.`);
+            }
 
-             requiresAvailabilityCheck = true; // Room change requires availability check
-             requiresRoomUpdate = true; // Need to update status for both old and new room
+            requiresAvailabilityCheck = true;
+            requiresRoomUpdate = true;
+            console.log(`[Service] Room change: ${oldRoomId} → ${newRoomId}`);
         }
 
-        // 5. Check Availability if dates or room changed (excluding current booking)
-       const finalRoomId = newRoomId || oldRoomId;
+        // Check Availability
+        const finalRoomId = newRoomId || oldRoomId;
         if (requiresAvailabilityCheck && finalRoomId) {
-            const isAvailable = await isRoomAvailable(finalRoomId, checkIn, checkOut, id);
-            if (!isAvailable) throw new Error(`Phòng ${finalRoomId} không còn trống cho khoảng thời gian này.`);
+            const available = await isRoomAvailable(finalRoomId, checkIn, checkOut, id);
+            if (!available) {
+                throw new Error(`Phòng không còn trống cho khoảng thời gian này.`);
+            }
         }
 
-        // 6. Prepare update data for booking
-      // 6. Prepare update data for booking
-        // Declare the updateData object with the correct Prisma type
+        // Prepare update data
         const updateData: Prisma.BookingUpdateInput = {};
+        
+        if (data.guestName !== undefined) updateData.guestName = data.guestName;
+        if (data.guestPhone !== undefined) updateData.guestPhone = data.guestPhone;
+        if (data.guestEmail !== undefined) updateData.guestEmail = data.guestEmail;
+        if (data.guestCount !== undefined) updateData.guestCount = data.guestCount;
+        if (data.checkInDate) updateData.checkInDate = data.checkInDate;
+        if (data.checkOutDate) updateData.checkOutDate = data.checkOutDate;
+        if (data.specialRequest !== undefined) updateData.specialRequest = data.specialRequest;
+        if (newStatus) updateData.status = newStatus;
 
-        // Assign simple text/number fields if they are provided in the input 'data'
-        // Use trim() for strings and allow clearing fields by providing null or empty string (handled in service/controller)
-        if (data.guestName !== undefined) updateData.guestName = data.guestName.trim();
-        if (data.guestPhone !== undefined) updateData.guestPhone = data.guestPhone.trim();
-        if (data.guestEmail !== undefined) updateData.guestEmail = data.guestEmail?.trim() || null; // Allow clearing email
-        if (data.guestCount !== undefined) updateData.guestCount = data.guestCount; // Assumes controller sends valid number
-        if (data.checkInDate) updateData.checkInDate = data.checkInDate; // Assumes controller sends valid Date object
-        if (data.checkOutDate) updateData.checkOutDate = data.checkOutDate; // Assumes controller sends valid Date object
-        if (data.specialRequest !== undefined) updateData.specialRequest = data.specialRequest?.trim() || null; // Allow clearing
-        if (newStatus) updateData.status = newStatus; // Assign validated new status
-
-        // Update the Room relation if the room ID has changed
         if (newRoomId && newRoomId !== oldRoomId) {
-            updateData.Room = {      // Target the 'Room' relation field (defined in your schema)
-                connect: { id: newRoomId } // Use 'connect' to link to the existing Room by its ID
-            };
+            updateData.Room = { connect: { id: newRoomId } };
         }
 
-        // --- Recalculate totalPrice if relevant data changed ---
-        let calculatedTotalPrice = currentBooking.totalPrice; // Default to current price
-
-        // Check if dates changed OR if the room changed (and a final room ID is determined)
+        // Recalculate totalPrice if needed
         const roomOrDatesChanged = (data.checkInDate || data.checkOutDate || (newRoomId && newRoomId !== oldRoomId));
-
         if (roomOrDatesChanged && finalRoomId) {
-             // Fetch the details (especially price) of the room that will be associated with the booking
-             const roomForPrice = await tx.room.findUniqueOrThrow({
-                 where: { id: finalRoomId },
-                 select: { price: true } // Only need the price
-             });
-
-             // Recalculate the number of nights based on the potentially updated dates
-             const nights = calculateNights(checkIn, checkOut); // Uses the updated checkIn/checkOut variables
-
-             // If nights calculation is valid (greater than 0)
-             if (nights > 0) {
-                  calculatedTotalPrice = roomForPrice.price * nights; // Calculate the new total price
-                  updateData.totalPrice = calculatedTotalPrice; // Add the updated price to the data going to Prisma
-             } else {
-                 // Handle invalid night calculation (e.g., checkOut <= checkIn) - maybe set to 0 or throw error earlier
-                 updateData.totalPrice = 0; // Or keep old price? Depends on desired logic.
-                 console.warn(`Booking ID ${id}: Calculated nights is 0 or less based on dates. Setting total price to 0.`);
-             }
+            const roomForPrice = await tx.room.findUniqueOrThrow({
+                where: { id: finalRoomId },
+                select: { price: true }
+            });
+            const nights = calculateNights(checkIn, checkOut);
+            if (nights > 0) {
+                updateData.totalPrice = roomForPrice.price * nights;
+                console.log(`[Service] Recalculated price: ${nights} x ${roomForPrice.price} = ${updateData.totalPrice}`);
+            }
         }
-        // If only guest details or status changed, updateData.totalPrice remains unset,
-        // so Prisma won't update the totalPrice field.
 
-        // 7. Update Booking
+        // Update Booking
         const updatedBooking = await tx.booking.update({
             where: { id },
             data: updateData,
         });
 
-        // 8. Update RoomBooking link if room changed
+        // Update RoomBooking link
         if (newRoomId && newRoomId !== oldRoomId) {
-             const roomForPrice = await tx.room.findUniqueOrThrow({ where: { id: newRoomId }});
-             const nights = calculateNights(checkIn, checkOut);
-            await tx.roomBooking.updateMany({ // Assuming only one room per booking for now
-                 where: { bookingId: id },
-                 data: {
-                     roomId: newRoomId,
-                     price: roomForPrice.price, // Update price based on new room
-                     quantity: nights > 0 ? nights : undefined // Update nights if dates changed
-                 }
+            const roomForPrice = await tx.room.findUniqueOrThrow({ where: { id: newRoomId } });
+            const nights = calculateNights(checkIn, checkOut);
+            await tx.roomBooking.updateMany({
+                where: { bookingId: id },
+                data: {
+                    roomId: newRoomId,
+                    price: roomForPrice.price,
+                    quantity: nights > 0 ? nights : undefined
+                }
             });
         } else if (data.checkInDate || data.checkOutDate) {
-             // If only dates changed, update quantity in RoomBooking
-             const nights = calculateNights(checkIn, checkOut);
-             if (nights > 0 && oldRoomId) { // Check oldRoomId exists
+            const nights = calculateNights(checkIn, checkOut);
+            if (nights > 0 && oldRoomId) {
                 await tx.roomBooking.updateMany({
-                     where: { bookingId: id, roomId: oldRoomId },
-                     data: { quantity: nights }
+                    where: { bookingId: id, roomId: oldRoomId },
+                    data: { quantity: nights }
                 });
-             }
+            }
         }
 
-
-        // 9. Update Room Statuses
-      // 9. Update Room Statuses
+        // Update Room Statuses
         if (requiresRoomUpdate) {
-             const finalStatus = newStatus || oldStatus; // Final status of the booking
+            const finalStatus = newStatus || oldStatus;
 
-             // --- Handle Old Room ---
-             // Check if the room changed OR if the final status means the room should be freed
-             if (oldRoomId && (newRoomId !== oldRoomId ||
-                 // === CORRECTED CHECK 1 ===
-                 (finalStatus === BookingStatus.CANCELLED || finalStatus === BookingStatus.CHECKED_OUT))
-                 // === END CORRECTION 1 ===
-                )
-             {
-                  // Check if the OLD room has any OTHER Confirmed/CheckedIn bookings
-                  const otherBookingsOldRoom = await tx.booking.findFirst({
-                       where: {
-                            roomId: oldRoomId,
-                            id: { not: id },
-                            status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] }
-                       }
-                  });
-                  // If no other active bookings, set old room to AVAILABLE
-                  if (!otherBookingsOldRoom) {
-                       await tx.room.update({
-                            where: { id: oldRoomId },
-                            data: { status: RoomStatus.AVAILABLE }
-                       });
-                       console.log(`[Service Update] Set old room ${oldRoomId} to AVAILABLE.`);
-                  } else {
-                       console.log(`[Service Update] Old room ${oldRoomId} still has other bookings.`);
-                  }
-             }
+            // Free old room if needed
+            if (oldRoomId && (
+                newRoomId !== oldRoomId ||
+                finalStatus === BookingStatus.CANCELLED ||
+                finalStatus === BookingStatus.CHECKED_OUT
+            )) {
+                const otherBookingsOldRoom = await tx.booking.findFirst({
+                    where: {
+                        roomId: oldRoomId,
+                        id: { not: id },
+                        status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN] }
+                    }
+                });
+                
+                if (!otherBookingsOldRoom) {
+                    await tx.room.update({
+                        where: { id: oldRoomId },
+                        data: { status: RoomStatus.AVAILABLE }
+                    });
+                    console.log(`[Service] Freed room ${oldRoomId}`);
+                }
+            }
 
-             // --- Handle New/Current Room ---
-             const currentRoomIdForStatus = newRoomId || oldRoomId;
-             if (currentRoomIdForStatus) {
-                  // === CORRECTED CHECK 2 ===
-                  // If the final status is Confirmed or Checked In, mark the room as BOOKED
-                  if (finalStatus === BookingStatus.CONFIRMED || finalStatus === BookingStatus.CHECKED_IN)
-                  // === END CORRECTION 2 ===
-                  {
-                       await tx.room.update({
-                            where: { id: currentRoomIdForStatus },
-                            data: { status: RoomStatus.BOOKED }
-                       });
-                       console.log(`[Service Update] Set current/new room ${currentRoomIdForStatus} to BOOKED.`);
-                  }
-                  // If status changed BACK to PENDING from something else, keep it BOOKED (prevents double booking)
-                  else if (finalStatus === BookingStatus.PENDING && oldStatus !== BookingStatus.PENDING) {
-                       await tx.room.update({
-                            where: { id: currentRoomIdForStatus },
-                            data: { status: RoomStatus.BOOKED } // Keep BOOKED for PENDING
-                       });
-                        console.log(`[Service Update] Kept current/new room ${currentRoomIdForStatus} as BOOKED (status changed to PENDING).`);
-                  }
-                  // Note: If the final status is CANCELLED or CHECKED_OUT, the logic for the "Old Room"
-                  // (which might be the same as the current room if the room wasn't changed)
-                  // already handles setting it back to AVAILABLE if no other bookings exist.
-             }
-        } // End if (requiresRoomUpdate)
+            // Book new/current room if needed
+            const currentRoomIdForStatus = newRoomId || oldRoomId;
+            if (currentRoomIdForStatus) {
+                if (finalStatus === BookingStatus.CONFIRMED || finalStatus === BookingStatus.CHECKED_IN) {
+                    await tx.room.update({
+                        where: { id: currentRoomIdForStatus },
+                        data: { status: RoomStatus.BOOKED }
+                    });
+                    console.log(`[Service] Booked room ${currentRoomIdForStatus}`);
+                }
+            }
+        }
 
-        return updatedBooking; // Return the updated booking object
-    }); // End Transaction
-}; // End updateBooking function
+        console.log(`[Service] ✅ Updated booking #${id}`);
+        return updatedBooking;
+    });
+};
 
-// ... (rest of the service file: deleteBooking, exports) ...
-
-
-// REVISED: Delete booking and update room status
+/**
+ * Xóa booking
+ */
 const deleteBooking = async (id: number) => {
     return await prisma.$transaction(async (tx) => {
-        // 1. Find booking to check status and get room ID
+        console.log(`[Service] Deleting booking #${id}`);
+
+        // Find booking
         const booking = await tx.booking.findUnique({
             where: { id },
-            select: { status: true, roomBookings: { select: { roomId: true }} } // Select necessary fields
+            select: { 
+                status: true, 
+                roomBookings: { select: { roomId: true } } 
+            }
         });
 
         if (!booking) {
             throw new Error("Booking không tồn tại.");
         }
 
-        // 2. Allow deletion only for PENDING or CANCELLED (CORRECTED CHECK)
+        // Only allow deletion for PENDING or CANCELLED
         if (booking.status !== BookingStatus.PENDING && booking.status !== BookingStatus.CANCELLED) {
-             throw new Error(
-                 `Không thể xóa booking ở trạng thái ${booking.status}. Chỉ xóa được khi PENDING hoặc CANCELLED.`
-             );
+            throw new Error(
+                `Không thể xóa booking ở trạng thái ${booking.status}. Chỉ xóa được khi PENDING hoặc CANCELLED.`
+            );
         }
-        // --- End Correction ---
 
         const roomId = booking.roomBookings?.[0]?.roomId;
 
-        // 3. Delete related records first
+        // Delete related records
         await tx.payment.deleteMany({ where: { bookingId: id } });
         await tx.roomBooking.deleteMany({ where: { bookingId: id } });
-        await tx.bookingService.deleteMany({ where: { bookingId: id } }); // If using BookingService
+        await tx.bookingService.deleteMany({ where: { bookingId: id } });
 
-        // 4. Delete the booking itself
+        // Delete booking
         await tx.booking.delete({ where: { id } });
 
-        // 5. Update room status if a room was associated and no other bookings hold it
+        console.log(`[Service] ✅ Deleted booking #${id}`);
+
+        // Update room status if needed
         if (roomId) {
             const otherBookings = await tx.booking.findFirst({
                 where: {
                     roomId: roomId,
-                    // id: { not: id }, // Not needed since current booking is deleted
-                    status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN, BookingStatus.PENDING] } // Check active/pending bookings
+                    status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN, BookingStatus.PENDING] }
                 }
             });
-            // If no other relevant bookings exist for this room, set it to AVAILABLE
+            
             if (!otherBookings) {
                 await tx.room.update({
                     where: { id: roomId },
                     data: { status: RoomStatus.AVAILABLE }
                 });
-                 console.log(`[Service] Room ${roomId} status set to AVAILABLE after deleting booking ${id}.`);
-            } else {
-                 console.log(`[Service] Room ${roomId} still has other bookings, status not changed after deleting booking ${id}.`);
+                console.log(`[Service] ✅ Freed room ${roomId} after deletion`);
             }
         }
 
-        return true; // Indicate successful deletion
+        return true;
     });
 };
 
-
+// ==================== EXPORTS ====================
 export {
     getAllBookings,
     getBookingById,
     createBooking,
     updateBooking,
     deleteBooking,
-    getRoomsForAdminBooking as getAvailableRooms, // Export renamed function
+    getRoomsForAdminBooking as getAvailableRooms,
     calculateNights,
-    validateDates
+    validateDates,
+    autoCheckOutExpiredBookings
 };
+                
