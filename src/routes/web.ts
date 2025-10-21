@@ -25,15 +25,19 @@ import {
     postRefundPayment,
     postDeletePayment
 } from "controllers/admin/payment.controller";
+import { getHomePage } from "controllers/client/homepage.controller";
+
+
+ 
 
 const router = express.Router();
 
 const webRoutes = (app: Express) => {
 
     // ==================== PUBLIC ROUTES ====================
-    router.get("/", (req, res) => {
-        res.render("client/home/show");
-    });
+    router.get("/", getHomePage); 
+
+    
     router.get("/rooms", getRoomsPage);
     router.get("/team", getTeamPage);
     router.get("/service", getServicePage);

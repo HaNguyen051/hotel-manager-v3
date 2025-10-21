@@ -90,7 +90,7 @@ const updateProfile = async (req: Request, res: Response) => {
 
              // Đặt flash thành công và redirect
              req.flash('success_msg', '✅ Cập nhật thông tin tài khoản thành công!');
-             return res.redirect('/profile');
+             return res.redirect('/');
         });
 
     } catch (error: any) {
