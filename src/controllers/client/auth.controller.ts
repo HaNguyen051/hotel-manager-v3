@@ -6,13 +6,18 @@ const { PrismaClient } = require('@prisma/client');
 
 
 const getLoginPage = async (req: Request, res: Response) => {
-    // const user = req.user; 
-    const { session } = req as any; 
+    const { session, query } = req as any; 
     const messages = session?.messages ?? []; 
+
+    // ✅ Kiểm tra nếu có ?registered=success trên URL
+    const registered = query.registered === "success";
+
     return res.render("client/auth/login.ejs", {
-        messages
+        messages,
+        registered, // truyền biến sang EJS
     }); 
 }
+
 const getRegisterPage = async (req: Request, res: Response) => {
     const errors = []; 
     const oldData = {
@@ -44,10 +49,12 @@ const postRegister = async (req: Request, res: Response) => {
         });
            
     }
-    //success
-    // //handle create user
-    await registerNewUser(fullName , email , password) ; 
-      return res.redirect("/login"); 
+//success
+await registerNewUser(fullName, email, password);
+
+// ✅ Chuyển sang trang login kèm thông báo đăng ký thành công
+return res.redirect("/login?registered=success");
+
 }
 const getSuccessRedirectPage = async (req: Request, res: Response) => {
     const user = req.user ;

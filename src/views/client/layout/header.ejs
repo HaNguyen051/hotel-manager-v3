@@ -61,6 +61,18 @@
           font-size: 1.1rem;
         }
       }
+      /* Áp dụng hiệu ứng hover giống nav-link cho biểu tượng người dùng */
+      .a-login i,
+      .dropdown > a i {
+        color: #fff !important; /* Giữ màu trắng mặc định */
+        transition: color 0.3s ease;
+        padding: 20px;
+      }
+
+      .a-login i:hover,
+      .dropdown > a i:hover {
+        color: #fea116 !important; /* Dùng màu chủ đạo khi hover */
+      }
     </style>
   </head>
 

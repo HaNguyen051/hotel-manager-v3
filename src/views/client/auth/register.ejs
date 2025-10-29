@@ -209,5 +209,12 @@
       crossorigin="anonymous"
     ></script>
     <script src="/admin/js/scripts.js"></script>
+    
+    <% if (typeof registered !== 'undefined' && registered) { %>
+      <script>
+        alert("Đăng ký thành công! Vui lòng đăng nhập để tiếp tục.");
+      </script>
+    <% } %>
+
   </body>
 </html>
