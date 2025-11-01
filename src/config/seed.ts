@@ -59,7 +59,7 @@ const initDatabase = async () => {
 
         if (userRole) {
             const normalUser = await prisma.user.findFirst({
-                where: { 
+                where: {
                     roleId: userRole.id,
                     username: 'user@example.com'
                 },
@@ -89,10 +89,11 @@ const initDatabase = async () => {
 
         // ==================== TẠO PHÒNG MẪU ====================
         const roomCount = await prisma.room.count();
-                if (roomCount === 0) {
+        if (roomCount === 0) {
             console.log('Tạo 5 phòng mới từ SQL...');
             await prisma.room.createMany({
                 data: [
+
                     // ===== Tầng 1 =====
                     {
                         name: 'Phòng 101',
@@ -194,15 +195,16 @@ const initDatabase = async () => {
                         description: 'Phòng Deluxe đẳng cấp, có khu vực tiếp khách và view hồ bơi. Trang bị tiện nghi cao cấp cho kỳ nghỉ thoải mái nhất.',
                         capacity: 4
                     }
+
                 ],
                 skipDuplicates: true,
             });
-                console.log('Đã tạo 5 phòng mới.');
+            console.log('Đã tạo 5 phòng mới.');
         } else {
-                    console.log('Phòng đã tồn tại');
+            console.log('Phòng đã tồn tại');
         }
-          
-        
+
+
 
         // ==================== TẠO DỊCH VỤ MẪU ====================
         const serviceCount = await prisma.service.count();
