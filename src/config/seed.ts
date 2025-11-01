@@ -59,7 +59,7 @@ const initDatabase = async () => {
 
         if (userRole) {
             const normalUser = await prisma.user.findFirst({
-                where: { 
+                where: {
                     roleId: userRole.id,
                     username: 'user@example.com'
                 },
@@ -89,25 +89,25 @@ const initDatabase = async () => {
 
         // ==================== TẠO PHÒNG MẪU ====================
         const roomCount = await prisma.room.count();
-                if (roomCount === 0) {
+        if (roomCount === 0) {
             console.log('Tạo 5 phòng mới từ SQL...');
             await prisma.room.createMany({
                 data: [
                     // Chỉ thêm 5 phòng mới từ SQL
-                    { name: 'Phòng 101', type: 'Single', price: 500000,image: 'room-101.jpg', description: 'Phòng đơn tiện nghi, view thành phố', capacity: 1 },
-                    { name: 'Phòng 102', type: 'Double', price: 800000,image: 'room-102.jpg', description: 'Phòng đôi sang trọng, bồn tắm spa', capacity: 2 },
-                    { name: 'Phòng 103', type: 'Suite', price: 1500000,image: 'room-103.jpg', description: 'Phòng suite cao cấp, phòng khách riêng', capacity: 4 },
-                    { name: 'Phòng 201', type: 'Double', price: 900000,image: 'room-201.jpg', description: 'Phòng đôi view hồ, ban công riêng', capacity: 2 },
+                    { name: 'Phòng 101', type: 'Single', price: 500000, image: 'room-101.jpg', description: 'Phòng đơn tiện nghi, view thành phố', capacity: 1 },
+                    { name: 'Phòng 102', type: 'Double', price: 800000, image: 'room-102.jpg', description: 'Phòng đôi sang trọng, bồn tắm spa', capacity: 2 },
+                    { name: 'Phòng 103', type: 'Suite', price: 1500000, image: 'room-103.jpg', description: 'Phòng suite cao cấp, phòng khách riêng', capacity: 4 },
+                    { name: 'Phòng 201', type: 'Double', price: 900000, image: 'room-201.jpg', description: 'Phòng đôi view hồ, ban công riêng', capacity: 2 },
                     { name: 'Phòng 202', type: 'Single', price: 550000, image: 'room-202.jpg', description: 'Phòng đơn hiện đại, WiFi miễn phí', capacity: 1 }
                 ],
                 skipDuplicates: true,
             });
-                console.log('Đã tạo 5 phòng mới.');
+            console.log('Đã tạo 5 phòng mới.');
         } else {
-                    console.log('Phòng đã tồn tại');
+            console.log('Phòng đã tồn tại');
         }
-          
-        
+
+
 
         // ==================== TẠO DỊCH VỤ MẪU ====================
         const serviceCount = await prisma.service.count();
