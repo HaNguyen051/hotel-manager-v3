@@ -93,12 +93,107 @@ const initDatabase = async () => {
             console.log('Tạo 5 phòng mới từ SQL...');
             await prisma.room.createMany({
                 data: [
-                    // Chỉ thêm 5 phòng mới từ SQL
-                    { name: 'Phòng 101', type: 'Single', price: 500000,image: 'room-101.jpg', description: 'Phòng đơn tiện nghi, view thành phố', capacity: 1 },
-                    { name: 'Phòng 102', type: 'Double', price: 800000,image: 'room-102.jpg', description: 'Phòng đôi sang trọng, bồn tắm spa', capacity: 2 },
-                    { name: 'Phòng 103', type: 'Suite', price: 1500000,image: 'room-103.jpg', description: 'Phòng suite cao cấp, phòng khách riêng', capacity: 4 },
-                    { name: 'Phòng 201', type: 'Double', price: 900000,image: 'room-201.jpg', description: 'Phòng đôi view hồ, ban công riêng', capacity: 2 },
-                    { name: 'Phòng 202', type: 'Single', price: 550000, image: 'room-202.jpg', description: 'Phòng đơn hiện đại, WiFi miễn phí', capacity: 1 }
+                    // ===== Tầng 1 =====
+                    {
+                        name: 'Phòng 101',
+                        type: 'Single',
+                        price: 500000,
+                        image: '/rooms/balcony-sencilla.webp',
+                        description: 'Phòng đơn hiện đại, thiết kế tối giản với ánh sáng tự nhiên và đầy đủ tiện nghi cơ bản. Lý tưởng cho khách du lịch hoặc công tác một mình.',
+                        capacity: 1
+                    },
+                    {
+                        name: 'Phòng 102',
+                        type: 'Double',
+                        price: 800000,
+                        image: '/rooms/9e8165ea11db2395d1876f47d882102f.jpg',
+                        description: 'Phòng đôi ấm cúng với giường lớn, không gian thoáng đãng và phòng tắm riêng. Thích hợp cho các cặp đôi nghỉ dưỡng ngắn ngày.',
+                        capacity: 2
+                    },
+                    {
+                        name: 'Phòng 103',
+                        type: 'Suite',
+                        price: 1500000,
+                        image: '/rooms/atlantic-hotel-heidelberg-suite-wohnraum-blick-ins-schlafzimmer.jpg',
+                        description: 'Phòng Suite sang trọng, có phòng khách riêng, bồn tắm hiện đại và ban công hướng phố. Mang đến trải nghiệm nghỉ dưỡng đẳng cấp.',
+                        capacity: 2
+                    },
+                    {
+                        name: 'Phòng 104',
+                        type: 'Deluxe',
+                        price: 3000000,
+                        image: '/rooms/deluxetwinpanoramic-S360-desktop.webp',
+                        description: 'Phòng Deluxe cao cấp với 2 giường đôi, nội thất gỗ sang trọng và tầm nhìn toàn cảnh thành phố. Lý tưởng cho gia đình hoặc nhóm bạn.',
+                        capacity: 4
+                    },
+
+                    // ===== Tầng 2 =====
+                    {
+                        name: 'Phòng 201',
+                        type: 'Single',
+                        price: 500000,
+                        image: '/rooms/p3-1.jpg',
+                        description: 'Phòng đơn trang nhã với tông màu ấm, có bàn làm việc và wifi tốc độ cao. Thích hợp cho khách công tác hoặc nghỉ ngắn.',
+                        capacity: 1
+                    },
+                    {
+                        name: 'Phòng 202',
+                        type: 'Double',
+                        price: 800000,
+                        image: '/rooms/double.jpeg',
+                        description: 'Phòng đôi tiện nghi, có cửa sổ lớn nhìn ra khu vườn. Không gian yên tĩnh và thư giãn cho các cặp đôi.',
+                        capacity: 2
+                    },
+                    {
+                        name: 'Phòng 203',
+                        type: 'Suite',
+                        price: 1500000,
+                        image: '/ooms/vhGowJ4h7-3j7qQUxwFdWRn--MfI2TPYKyUFZ952UMcSwtpWgnh_BiAA4JDfVe9rX1MJma47fmCVSC5C_-I3m4Fma1KbpLUuefL7mbf41NEzse9kO6d2iDt-cijgpiiuKIA3p5Duhy8qMnA_DnIhZg.jpg',
+                        description: 'Suite cao cấp với phòng khách, khu làm việc riêng và minibar. Phong cách hiện đại và thoải mái cho kỳ nghỉ dài.',
+                        capacity: 2
+                    },
+                    {
+                        name: 'Phòng 204',
+                        type: 'Deluxe',
+                        price: 3000000,
+                        image: '/rooms/EKhLrgI5b-Fb1tnN_gbL-RiSK4U7SnIiRi_oO9bVw2Vvf7JY7dXoT3fs7QyZxVUnUMuWDMSjYXrJcb2FBb4jghM8TtT6XzrCH60CeIOFpL0gu3O1hQt-L-iZoX6ztufYnFNigZnbCH7nbXEBOKkWZg.jpg',
+                        description: 'Phòng Deluxe rộng rãi với ban công riêng, phòng tắm đá cẩm thạch và sofa thư giãn. Mang lại cảm giác sang trọng và riêng tư.',
+                        capacity: 4
+                    },
+
+                    // ===== Tầng 3 =====
+                    {
+                        name: 'Phòng 301',
+                        type: 'Single',
+                        price: 500000,
+                        image: '/rooms/One-Bedoom-City-View-Suite-scaled.jpg',
+                        description: 'Phòng đơn thoáng mát, nội thất gọn gàng và giường êm ái. View đẹp nhìn ra thành phố, phù hợp cho khách đi một mình.',
+                        capacity: 1
+                    },
+                    {
+                        name: 'Phòng 302',
+                        type: 'Double',
+                        price: 800000,
+                        image: '/rooms/chamber-double.jpg',
+                        description: 'Phòng đôi hiện đại với không gian mở, ánh sáng tự nhiên và đầy đủ tiện nghi, phù hợp cho kỳ nghỉ lãng mạn.',
+                        capacity: 2
+                    },
+                    {
+                        name: 'Phòng 303',
+                        type: 'Suite',
+                        price: 1500000,
+                        image: '/rooms/Park-Hyatt-New-York-Manhattan-Sky-Suite-Master-Bedroom-Central-Park-View.jpg',
+                        description: 'Phòng Suite cao cấp với thiết kế hiện đại, có phòng khách riêng và bồn tắm lớn. Mang lại trải nghiệm nghỉ dưỡng sang trọng.',
+                        capacity: 2
+                    },
+                    {
+                        name: 'Phòng 304',
+                        type: 'Deluxe',
+                        price: 3000000,
+                        image: '/rooms/1920-1280.png',
+                        description: 'Phòng Deluxe đẳng cấp, có khu vực tiếp khách và view hồ bơi. Trang bị tiện nghi cao cấp cho kỳ nghỉ thoải mái nhất.',
+                        capacity: 4
+                    }
                 ],
                 skipDuplicates: true,
             });
