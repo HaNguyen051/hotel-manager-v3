@@ -10,6 +10,7 @@ import passport from "passport";
 import configPassportLocal from "./types/passport.local";
 import webRoutes from "./routes/web";
 import initDatabase from "config/seed"; // Import seeder
+import configPassportGoogle from "config/passport.google";
 
 const app: Express = express();
 const port = process.env.PORT || 8000;
@@ -45,6 +46,7 @@ app.use(session({
 
 // Config Passport (Phải sau session)
 configPassportLocal();
+configPassportGoogle();
 app.use(passport.initialize());
 app.use(passport.session()); // Dùng .session()
 

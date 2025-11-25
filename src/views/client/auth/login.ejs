@@ -38,7 +38,6 @@
       #layoutAuthentication {
         z-index: 1;
       }
-      /* Thêm vào trong thẻ <style> của login.ejs */
 
       /* Đổi màu nền icon input */
       .input-group-text {
@@ -61,15 +60,17 @@
 
       /* Đổi màu icon logo */
       .card-header .fa-hotel {
-        color: #fea116 !important; /* Dùng !important để ghi đè nếu cần */
+        color: #fea116 !important;
       }
 
       /* Đổi màu link đăng ký */
       .card-footer a {
         color: #fea116;
+        text-decoration: none;
       }
       .card-footer a:hover {
         color: #d68a13;
+        text-decoration: underline;
       }
     </style>
   </head>
@@ -94,15 +95,25 @@
                     </h3>
                   </div>
                   <div class="card-body">
-                    <% messages.forEach( function (error) { %>
+                    <% if (typeof error_msg !== 'undefined' && error_msg &&
+                    error_msg.length > 0) { %>
                     <div
                       class="alert alert-danger d-flex align-items-center mb-3"
                       role="alert"
                     >
                       <i class="fas fa-circle-exclamation me-2"></i>
-                      <div><%= error %></div>
+                      <div><%- error_msg[0] %></div>
                     </div>
-                    <% }) %>
+                    <% } %> <% if (typeof messages !== 'undefined' && messages
+                    && messages.length > 0) { %>
+                    <div
+                      class="alert alert-danger d-flex align-items-center mb-3"
+                      role="alert"
+                    >
+                      <i class="fas fa-circle-exclamation me-2"></i>
+                      <div><%= messages[0] %></div>
+                    </div>
+                    <% } %>
 
                     <form method="post" action="/login">
                       <div class="input-group mb-3">
@@ -114,8 +125,9 @@
                             name="username"
                             class="form-control"
                             id="floatingEmail"
-                            type="email"
+                            type="text"
                             placeholder="name@example.com"
+                            required
                           />
                           <label for="floatingEmail">Địa chỉ Email</label>
                         </div>
@@ -132,6 +144,7 @@
                             id="floatingPassword"
                             type="password"
                             placeholder="Password"
+                            required
                           />
                           <label for="floatingPassword">Mật khẩu</label>
                         </div>
@@ -144,6 +157,20 @@
                         </button>
                       </div>
                     </form>
+
+                    <div class="text-center my-3">
+                      <span class="text-muted">- Hoặc -</span>
+                    </div>
+
+                    <div class="d-grid">
+                      <a
+                        href="/auth/google"
+                        class="btn btn-danger btn-lg"
+                        style="background-color: #db4437; border-color: #db4437"
+                      >
+                        <i class="fab fa-google me-2"></i> Đăng nhập bằng Google
+                      </a>
+                    </div>
                   </div>
                   <div class="card-footer text-center py-3">
                     <div class="small">

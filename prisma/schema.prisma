@@ -20,7 +20,8 @@ model Session {
 model User {
   id          Int     @id @default(autoincrement())
   username    String  @unique @db.VarChar(255)
-  password    String  @db.VarChar(255)
+  password    String? @db.VarChar(255)
+  googleId    String? @unique @db.VarChar(255) // THÊM TRƯỜNG NÀY
   fullName    String? @db.VarChar(255)
   phone       String? @db.VarChar(20)
   address     String? @db.VarChar(500)

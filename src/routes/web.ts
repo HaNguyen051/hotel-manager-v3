@@ -33,7 +33,24 @@ import { getHomePage } from "controllers/client/homepage.controller";
 const router = express.Router();
 
 const webRoutes = (app: Express) => {
+    // ==================== GOOGLE AUTH ROUTES ====================
+    
+    // 1. Route để bắt đầu đăng nhập
+    router.get('/auth/google', 
+        passport.authenticate('google', { scope: ['profile', 'email'] })
+    );
 
+    // 2. Route callback (Google gọi về sau khi user đồng ý)
+    router.get('/auth/google/callback', 
+        passport.authenticate('google', { 
+            failureRedirect: '/login',
+            failureMessage: true 
+        }),
+        (req, res) => {
+            // Đăng nhập thành công -> Chuyển hướng
+            res.redirect('/'); // Hoặc '/success-redirect' tùy logic của bạn
+        }
+    );
     // ==================== PUBLIC ROUTES ====================
     router.get("/", getHomePage); 
 
