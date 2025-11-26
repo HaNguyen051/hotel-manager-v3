@@ -26,6 +26,7 @@ import {
     postDeletePayment
 } from "controllers/admin/payment.controller";
 import { getHomePage } from "controllers/client/homepage.controller";
+import { handleMoMoCallback, initiateMoMoPayment } from "controllers/client/momo.controller";
 
 
  
@@ -72,6 +73,14 @@ const webRoutes = (app: Express) => {
     router.get("/success-redirect", isAuthenticated, getSuccessRedirectPage);
     router.post("/logout", isAuthenticated, postLogout);
 
+    // === MOMO PAYMENT ROUTES ===
+    // Route 1: Bắt đầu thanh toán
+    router.post("/payment/momo/create", isAuthenticated, initiateMoMoPayment);
+    
+    // Route 2: Nhận kết quả trả về từ MoMo
+    router.get("/payment/momo/callback", handleMoMoCallback);
+
+    // ...
     // ==================== CLIENT BOOKING ROUTES ====================
     router.get("/booking", isAuthenticated, getBookingPage);
     router.post("/booking/available-rooms", isAuthenticated, postAvailableRooms);

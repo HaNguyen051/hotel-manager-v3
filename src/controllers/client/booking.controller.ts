@@ -177,9 +177,11 @@ const getBookingSuccess = async (req: Request, res: Response) => {
             include: {
                 roomBookings: { // Bao gồm cả roomBookings
                     include: {
-                        room: true // Và thông tin phòng trong đó
+                        room: true,
+                        // Và thông tin phòng trong đó
                     }
-                }
+                },
+                payment : true
                 // user: true // Include user nếu cần hiển thị tên user
             }
         });
