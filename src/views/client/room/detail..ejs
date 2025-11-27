@@ -1,0 +1,112 @@
+<%- include('../layout/header'); -%>
+
+<div
+  class="container-fluid page-header mb-5 p-0"
+  style="background-image: url(/client/img/carousel-1.jpg)"
+>
+  <div class="container-fluid page-header-inner py-5">
+    <div class="container text-center pb-5">
+      <h1 class="display-3 text-white mb-3 animated slideInDown">
+        Chi Tiết Phòng
+      </h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb justify-content-center text-uppercase">
+          <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+          <li class="breadcrumb-item"><a href="/rooms">Phòng</a></li>
+          <li class="breadcrumb-item text-white active" aria-current="page">
+            <%= room.name %>
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<div class="container-xxl py-5">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
+        <div class="position-relative shadow rounded overflow-hidden">
+          <img
+            class="img-fluid w-100"
+            src="<%= room.image ? '/images/product/' + room.image : '/client/img/room-1.jpg' %>"
+            alt="<%= room.name %>"
+            style="object-fit: cover; min-height: 400px"
+          />
+
+          <div
+            class="position-absolute bottom-0 start-0 w-100 bg-dark bg-opacity-50 p-3"
+          >
+            <h4 class="text-white mb-0"><%= room.name %></h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-6 wow fadeIn" data-wow-delay="0.3s">
+        <h6 class="section-title text-start text-primary text-uppercase">
+          Chi Tiết
+        </h6>
+        <h1 class="mb-4">
+          <span class="text-primary text-uppercase"><%= room.type %></span> Room
+        </h1>
+
+        <h3 class="display-5 mb-4 text-danger">
+          <%= room.price.toLocaleString('vi-VN') %>đ
+          <span class="fs-5 text-body">/ Đêm</span>
+        </h3>
+
+        <p class="mb-4" style="font-size: 1.1rem; line-height: 1.8">
+          <%= room.description || 'Mô tả chi tiết về căn phòng này đang được cập
+          nhật. Phòng được trang bị đầy đủ tiện nghi hiện đại, mang lại cảm giác
+          thoải mái nhất cho quý khách.' %>
+        </p>
+
+        <div class="row g-3 pb-4">
+          <div class="col-sm-4 wow fadeIn" data-wow-delay="0.1s">
+            <div class="border rounded p-1">
+              <div class="border rounded text-center p-3">
+                <i class="fa fa-bed fa-2x text-primary mb-2"></i>
+                <p class="mb-0">Giường Êm Ái</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-4 wow fadeIn" data-wow-delay="0.3s">
+            <div class="border rounded p-1">
+              <div class="border rounded text-center p-3">
+                <i class="fa fa-wifi fa-2x text-primary mb-2"></i>
+                <p class="mb-0">Wifi Tốc Độ Cao</p>
+              </div>
+            </div>
+          </div>
+          <div class="col-sm-4 wow fadeIn" data-wow-delay="0.5s">
+            <div class="border rounded p-1">
+              <div class="border rounded text-center p-3">
+                <i class="fa fa-users fa-2x text-primary mb-2"></i>
+                <p class="mb-0">Tối đa <%= room.capacity %> Người</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="d-flex gap-3 mt-2">
+          <a
+            href="/booking?roomId=<%= room.id %>"
+            class="btn btn-primary py-3 px-5 rounded-pill w-100"
+          >
+            <i class="fas fa-calendar-check me-2"></i>Đặt Phòng Ngay
+          </a>
+          <a href="/rooms" class="btn btn-secondary py-3 px-5 rounded-pill">
+            Quay Lại
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-5 pt-5 border-top">
+      <h3 class="mb-4">Có thể bạn cũng thích</h3>
+      <div class="row g-4"></div>
+    </div>
+  </div>
+</div>
+
+<%- include('../layout/footer'); -%>

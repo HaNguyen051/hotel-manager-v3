@@ -7,7 +7,7 @@ import { isLogin, isAuthenticated, isAdmin } from "../middleware/auth";
 import { getAdminBookingPage, getCreateBookingPage, getViewBookingPage, postCreateBooking, postDeleteBooking, postUpdateBooking } from "controllers/admin/booking.controller";
 import { getAdminRoomPage, getAdminUserPage, getDashboardPage } from "controllers/admin/dashboard.controller";
 
-import { getRoomsPage } from "controllers/client/room.controller";
+import { getRoomDetailPage, getRoomsPage } from "controllers/client/room.controller";
 import { getTeamPage } from "controllers/team.controller";
 import { getServicePage } from "controllers/service.controller";
 import { getLoginPage, getRegisterPage, getSuccessRedirectPage, postLogout, postRegister } from "controllers/client/auth.controller";
@@ -55,7 +55,7 @@ const webRoutes = (app: Express) => {
     // ==================== PUBLIC ROUTES ====================
     router.get("/", getHomePage); 
 
-    
+    router.get("/room/detail/:id", getRoomDetailPage); 
     router.get("/rooms", getRoomsPage);
     router.get("/team", getTeamPage);
     router.get("/service", getServicePage);
