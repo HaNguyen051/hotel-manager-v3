@@ -5,7 +5,7 @@ import fileUploadMiddleware from "../middleware/multer";
 
 import { isLogin, isAuthenticated, isAdmin } from "../middleware/auth";
 import { getAdminBookingPage, getCreateBookingPage, getViewBookingPage, postCreateBooking, postDeleteBooking, postUpdateBooking } from "controllers/admin/booking.controller";
-import { getAdminRoomPage, getAdminUserPage, getDashboardPage } from "controllers/admin/dashboard.controller";
+import { exportDashboardToExcel, getAdminRoomPage, getAdminUserPage, getDashboardPage } from "controllers/admin/dashboard.controller";
 
 import { getRoomDetailPage, getRoomsPage } from "controllers/client/room.controller";
 import { getTeamPage } from "controllers/team.controller";
@@ -97,6 +97,7 @@ const webRoutes = (app: Express) => {
 
     // ==================== ADMIN ROUTES ====================
     router.get("/admin", isAuthenticated, isAdmin, getDashboardPage);
+    router.get("/admin/export-report", isAuthenticated, isAdmin, exportDashboardToExcel);
 
     // ===== USER MANAGEMENT =====
     router.get("/admin/user", isAuthenticated, isAdmin, getAdminUserPage);
