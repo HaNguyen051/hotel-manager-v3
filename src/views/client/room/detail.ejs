@@ -1,0 +1,275 @@
+<%- include('../layout/header'); -%>
+
+<div
+  class="container-fluid page-header mb-5 p-0"
+  style="background-image: url(/client/img/carousel-1.jpg)"
+>
+  <div class="container-fluid page-header-inner py-5">
+    <div class="container text-center pb-5">
+      <h1 class="display-3 text-white mb-3 animated slideInDown">
+        Chi Tiết Phòng
+      </h1>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb justify-content-center text-uppercase">
+          <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+          <li class="breadcrumb-item"><a href="/rooms">Phòng</a></li>
+          <li class="breadcrumb-item text-white active" aria-current="page">
+            <%= room.name %>
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<div class="container-xxl py-5">
+  <div class="container">
+    <div class="row g-5">
+      <div class="col-lg-8">
+        <div class="mb-4">
+          <div class="position-relative">
+            <img
+              class="img-fluid w-100 rounded shadow-sm"
+              src="<%= mainImage %>"
+              alt="<%= room.name %>"
+              style="object-fit: cover; height: 450px"
+            />
+
+            <% if (bookingCount > 0) { %>
+            <div
+              class="position-absolute top-0 end-0 bg-danger text-white px-3 py-2 m-3 rounded shadow"
+            >
+              <i class="fas fa-fire me-1"></i> Đã đặt <%= bookingCount %> lần
+            </div>
+            <% } else { %>
+            <div
+              class="position-absolute top-0 end-0 bg-success text-white px-3 py-2 m-3 rounded shadow"
+            >
+              <i class="fas fa-star me-1"></i> Phòng Mới
+            </div>
+            <% } %>
+          </div>
+
+          <div class="row g-2 mt-2">
+            <div class="col-3">
+              <img
+                src="/client/img/room-1.jpg"
+                class="img-fluid rounded"
+                style="
+                  height: 80px;
+                  width: 100%;
+                  object-fit: cover;
+                  cursor: pointer;
+                "
+              />
+            </div>
+            <div class="col-3">
+              <img
+                src="/client/img/room-2.jpg"
+                class="img-fluid rounded"
+                style="
+                  height: 80px;
+                  width: 100%;
+                  object-fit: cover;
+                  cursor: pointer;
+                "
+              />
+            </div>
+            <div class="col-3">
+              <img
+                src="/client/img/room-3.jpg"
+                class="img-fluid rounded"
+                style="
+                  height: 80px;
+                  width: 100%;
+                  object-fit: cover;
+                  cursor: pointer;
+                "
+              />
+            </div>
+            <div class="col-3 position-relative">
+              <img
+                src="/client/img/about-1.jpg"
+                class="img-fluid rounded"
+                style="
+                  height: 80px;
+                  width: 100%;
+                  object-fit: cover;
+                  filter: brightness(50%);
+                "
+              />
+              <div
+                class="position-absolute top-50 start-50 translate-middle text-white fw-bold"
+              >
+                +5 ảnh
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h2 class="mb-0 text-primary"><%= room.name %></h2>
+            <div class="text-warning">
+              <i class="fa fa-star"></i><i class="fa fa-star"></i
+              ><i class="fa fa-star"></i><i class="fa fa-star"></i
+              ><i class="fa fa-star-half-alt"></i>
+              <small class="text-muted text-dark">(4.8/5)</small>
+            </div>
+          </div>
+
+          <div class="d-flex mb-4 text-muted">
+            <span class="me-3"
+              ><i class="fa fa-bed me-2 text-primary"></i>Loại: <%= room.type
+              %></span
+            >
+            <span class="me-3"
+              ><i class="fa fa-user-friends me-2 text-primary"></i>Tối đa: <%=
+              room.capacity %> người</span
+            >
+            <span
+              ><i class="fa fa-ruler-combined me-2 text-primary"></i>Diện tích:
+              35m²</span
+            >
+          </div>
+
+          <p
+            class="text-body mb-4"
+            style="line-height: 1.8; text-align: justify"
+          >
+            <%= description %>
+          </p>
+        </div>
+
+        <div class="mb-5">
+          <h4 class="mb-4 border-bottom pb-2">Tiện Nghi Phòng</h4>
+          <div class="row g-3">
+            <div class="col-md-4 col-6">
+              <i class="fa fa-wifi text-primary me-2"></i> Wifi Tốc Độ Cao
+            </div>
+            <div class="col-md-4 col-6">
+              <i class="fa fa-tv text-primary me-2"></i> Smart TV 55"
+            </div>
+            <div class="col-md-4 col-6">
+              <i class="fa fa-snowflake text-primary me-2"></i> Điều hòa 2 chiều
+            </div>
+            <div class="col-md-4 col-6">
+              <i class="fa fa-coffee text-primary me-2"></i> Máy pha cà phê
+            </div>
+            <div class="col-md-4 col-6">
+              <i class="fa fa-bath text-primary me-2"></i> Bồn tắm nằm
+            </div>
+            <div class="col-md-4 col-6">
+              <i class="fa fa-tshirt text-primary me-2"></i> Bàn là & Két sắt
+            </div>
+          </div>
+        </div>
+
+        <div class="mb-5">
+          <h4 class="mb-4 border-bottom pb-2">Đánh Giá Từ Khách Hàng</h4>
+          <div class="d-flex mb-4">
+            <img
+              src="/client/img/team-1.jpg"
+              class="img-fluid rounded-circle p-1 border"
+              style="width: 50px; height: 50px"
+              alt="User 1"
+            />
+            <div class="ps-3">
+              <h6 class="mb-1">
+                Nguyễn Văn A
+                <small class="text-muted fw-normal fst-italic"
+                  >- 2 ngày trước</small
+                >
+              </h6>
+              <div class="text-warning small mb-2">
+                <i class="fa fa-star"></i><i class="fa fa-star"></i
+                ><i class="fa fa-star"></i><i class="fa fa-star"></i
+                ><i class="fa fa-star"></i>
+              </div>
+              <p class="mb-0 text-muted">
+                "Phòng rất sạch sẽ, view đẹp đúng như hình. Nhân viên nhiệt tình
+                hỗ trợ check-in sớm. Sẽ quay lại!"
+              </p>
+            </div>
+          </div>
+          <div class="d-flex">
+            <img
+              src="/client/img/team-2.jpg"
+              class="img-fluid rounded-circle p-1 border"
+              style="width: 50px; height: 50px"
+              alt="User 2"
+            />
+            <div class="ps-3">
+              <h6 class="mb-1">
+                Trần Thị B
+                <small class="text-muted fw-normal fst-italic"
+                  >- 1 tuần trước</small
+                >
+              </h6>
+              <div class="text-warning small mb-2">
+                <i class="fa fa-star"></i><i class="fa fa-star"></i
+                ><i class="fa fa-star"></i><i class="fa fa-star"></i
+                ><i class="fa fa-star"></i>
+              </div>
+              <p class="mb-0 text-muted">
+                "Dịch vụ tuyệt vời, bữa sáng ngon. Giường rất êm, ngủ rất ngon."
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-lg-4">
+        <div
+          class="bg-light p-4 rounded shadow sticky-top"
+          style="top: 100px; z-index: 10"
+        >
+          <div class="border-bottom pb-3 mb-3">
+            <small class="text-uppercase text-primary fw-bold"
+              >Giá Tốt Nhất</small
+            >
+            <h2 class="display-6 text-danger mb-0">
+              <%= room.price.toLocaleString('vi-VN') %>đ
+              <small class="fs-6 text-dark fw-normal">/ đêm</small>
+            </h2>
+          </div>
+
+          <ul class="list-unstyled mb-4">
+            <li class="mb-2">
+              <i class="fa fa-check text-success me-2"></i>Bao gồm bữa sáng
+            </li>
+            <li class="mb-2">
+              <i class="fa fa-check text-success me-2"></i>Hủy phòng miễn phí
+            </li>
+            <li class="mb-2">
+              <i class="fa fa-check text-success me-2"></i>Thanh toán linh hoạt
+            </li>
+          </ul>
+
+          <a
+            href="/booking?roomId=<%= room.id %>"
+            class="btn btn-primary w-100 py-3 rounded-pill mb-3 shadow hover-shadow"
+          >
+            <i class="fa fa-calendar-check me-2"></i> ĐẶT PHÒNG NGAY
+          </a>
+
+          <a
+            href="/rooms"
+            class="btn btn-outline-secondary w-100 py-2 rounded-pill"
+          >
+            <i class="fa fa-arrow-left me-2"></i> Xem phòng khác
+          </a>
+
+          <div class="mt-4 pt-4 border-top text-center">
+            <p class="mb-1 text-muted">Cần hỗ trợ?</p>
+            <h5 class="fw-bold text-dark">
+              <i class="fa fa-phone-alt me-2"></i>012 345 6789
+            </h5>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div style="margin-bottom: 200px"></div>
+<%- include('../layout/footer'); -%>

@@ -1,6 +1,6 @@
 // ==================== src/services/client/room.service.ts ====================
 import { prisma } from "config/client";
-import { RoomStatus } from "@prisma/client";
+import { BookingStatus, RoomStatus } from "@prisma/client";
 
 interface RoomQueryParams {
     page?: string;
@@ -68,12 +68,36 @@ export const getRoomsList = async (params: RoomQueryParams) => {
 };
 export const getRoomById = async (id: number) => {
     try {
+        // 1. Lấy thông tin phòng
         const room = await prisma.room.findUnique({
             where: { id: id }
         });
-        return room;
+
+        // 2. Đếm số lần phòng này đã được đặt (Tính cả CONFIRMED và CHECKED_IN)
+        const bookingCount = await prisma.roomBooking.count({
+            where: {
+                roomId: id,
+                booking: {
+                    status: { in: [BookingStatus.CONFIRMED, BookingStatus.CHECKED_IN, BookingStatus.CHECKED_OUT] }
+                }
+            }
+        });
+
+        // Trả về cả room và count
+        return { room, bookingCount }; 
     } catch (error) {
         console.error(`Error fetching room detail for id ${id}:`, error);
         throw error;
+    }
+};
+export const getAllRooms = async () => {
+    try {
+        return await prisma.room.findMany({
+            where: { status: { not: RoomStatus.MAINTENANCE } },
+            orderBy: { name: 'asc' }
+        });
+    } catch (error) {
+        console.error("Error fetching all rooms:", error);
+        return [];
     }
 };

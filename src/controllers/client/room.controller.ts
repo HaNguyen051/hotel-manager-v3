@@ -35,21 +35,36 @@ export const getRoomDetailPage = async (req: Request, res: Response) => {
 
     try {
         const roomId = parseInt(id);
-        if (isNaN(roomId)) {
+        if (isNaN(roomId)) return res.redirect('/rooms');
+
+        // Gọi Service lấy thông tin (Service trả về { room, bookingCount })
+        const data = await getRoomById(roomId);
+
+        if (!data || !data.room) {
             return res.redirect('/rooms');
         }
 
-        const room = await getRoomById(roomId);
+        const room = data.room;
+        const bookingCount = data.bookingCount || 0;
 
-        if (!room) {
-            // Nếu không tìm thấy phòng, quay về danh sách
-            return res.redirect('/rooms');
-        }
+        // --- XỬ LÝ LOGIC TẠI ĐÂY (Thay vì làm ở View) ---
+        
+        // 1. Xử lý ảnh chính
+        const mainImage = room.image ? `/images/product/${room.image}` : '/client/img/room-1.jpg';
 
-        return res.render("client/room/detail.ejs", {
+        // 2. Xử lý mô tả (nếu null thì dùng văn bản mẫu)
+        const defaultDesc = "Trải nghiệm không gian nghỉ dưỡng sang trọng và đẳng cấp. Phòng được thiết kế tinh tế với nội thất hiện đại, cửa sổ kính tràn ngắm trọn view thành phố. Hệ thống cách âm tiêu chuẩn quốc tế đảm bảo sự riêng tư tuyệt đối cho kỳ nghỉ của bạn.";
+        const description = room.description && room.description.trim() !== "" ? room.description : defaultDesc;
+
+        // 3. Render View (Truyền các biến đã xử lý)
+        return res.render("client/room/detail", { // Lưu ý: không có đuôi .ejs
             user: req.user,
-            room: room
+            room: room,
+            bookingCount: bookingCount,
+            mainImage: mainImage,       // Truyền ảnh đã xử lý
+            description: description    // Truyền mô tả đã xử lý
         });
+
     } catch (error) {
         console.error("Error getting room detail page:", error);
         return res.redirect('/rooms');
