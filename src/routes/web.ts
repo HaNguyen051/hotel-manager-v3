@@ -27,6 +27,7 @@ import {
 } from "controllers/admin/payment.controller";
 import { getHomePage } from "controllers/client/homepage.controller";
 import { handleMoMoCallback, initiateMoMoPayment } from "controllers/client/momo.controller";
+import { handleChatRequest } from "controllers/client/chat.controller";
 
 
  
@@ -59,6 +60,7 @@ const webRoutes = (app: Express) => {
     router.get("/rooms", getRoomsPage);
     router.get("/team", getTeamPage);
     router.get("/service", getServicePage);
+    router.post("/api/chat", handleChatRequest);
 
     // ==================== AUTH ROUTES ====================
     router.get("/login", isLogin, getLoginPage);
